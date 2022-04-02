@@ -1,0 +1,13 @@
+[package]
+name = "mindoc"
+version = "0.1.0"
+edition = "2021"
+
+authors = ["cympfh <cympfh@gmail.com>"]
+description = "minimal compiler: Markdown -> HTML"
+license = "MIT"
+repository = "https://github.com/cympfh/mindoc"
+
+[dependencies]
+nom = "7"
+structopt = "0.3"
