@@ -2,46 +2,65 @@ pub mod entity;
 pub mod parser;
 pub mod translator;
 
-use std::io::{self, Read};
+use std::fs::File;
+use std::io::BufReader;
+use std::io::{self, Read, Write};
 use structopt::StructOpt;
-
-fn read() -> String {
-    let mut content = String::new();
-    let stdin = io::stdin();
-    let mut handle = stdin.lock();
-    handle.read_to_string(&mut content).unwrap();
-    if !content.ends_with('\n') {
-        content += "\n"
-    }
-    content
-}
-
-fn write(buf: &String) {
-    println!("{}", buf);
-}
 
 #[derive(Debug, StructOpt)]
 struct Opt {
     #[structopt(long = "debug")]
     pub debug: bool,
+    #[structopt(long = "out", short = "o")]
+    pub output: Option<String>,
+    #[structopt(name = "input")]
+    pub input: Option<String>,
 }
 
-fn main() {
+fn read(opt: &Opt) -> io::Result<String> {
+    let mut content = String::new();
+    if let Some(input) = &opt.input {
+        let file = File::open(&input).unwrap();
+        let mut buf_reader = BufReader::new(file);
+        buf_reader.read_to_string(&mut content)?;
+    } else {
+        let stdin = io::stdin();
+        let mut handle = stdin.lock();
+        handle.read_to_string(&mut content)?;
+    }
+    if !content.ends_with('\n') {
+        content += "\n"
+    }
+    Ok(content)
+}
+
+fn write(opt: &Opt, buf: &String) -> io::Result<()> {
+    if let Some(output) = &opt.output {
+        let mut file = File::create(&output)?;
+        write!(file, "{}", buf)?;
+    } else {
+        println!("{}", buf);
+    }
+    Ok(())
+}
+
+fn main() -> io::Result<()> {
     let opt = Opt::from_args();
     if opt.debug {
         println!(">>> opt = {:?}", &opt);
     }
-    let content = read();
+    let content = read(&opt)?;
     if let Ok(markdown) = parser::markdown(content.as_str()) {
         if opt.debug {
             println!(">>> markdown = {:?}", &markdown);
         }
         let tr = translator::Translator::new(true);
         let html = tr.markdown(&markdown);
-        write(&html);
+        write(&opt, &html)?;
     } else {
         eprintln!("Something critical error");
     }
+    Ok(())
 }
 
 #[cfg(test)]
