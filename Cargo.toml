@@ -1,12 +1,12 @@
 [package]
-name = "mindoc"
+name = "unidoc"
 version = "0.1.0"
 edition = "2021"
 
 authors = ["cympfh <cympfh@gmail.com>"]
-description = "minimal compiler: Markdown -> HTML"
+description = "unidoc: Unite all Markdown"
 license = "MIT"
-repository = "https://github.com/cympfh/mindoc"
+repository = "https://github.com/cympfh/unidoc"
 
 [dependencies]
 nom = "7"
