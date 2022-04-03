@@ -9,8 +9,9 @@ impl Translator {
         Self { compact }
     }
 
-    pub fn markdown(&self, doc: &Markdown) -> String {
-        let mut ret = String::new();
+    /// Returns: (title, body)
+    pub fn markdown(&self, doc: &Markdown) -> (String, String) {
+        let mut html = vec![];
         for block in doc.iter() {
             let b = match block {
                 Block::Heading(level, label) => {
@@ -36,15 +37,14 @@ impl Translator {
                     self.table(&aligns, content, *has_header)
                 }
             };
-            ret.push_str(b.as_str());
-            if !self.compact {
-                ret.push('\n');
-            }
+            html.push(b);
         }
-        if self.compact {
-            ret.push('\n')
-        }
-        ret
+
+        let title = inner_text(&doc[0]);
+        let mut body = html.join("");
+        body.push('\n');
+
+        (title, body)
     }
 
     fn list(&self, list: &List) -> String {
@@ -144,5 +144,30 @@ impl Translator {
             Inline::Newline => format!("<br />"),
             Inline::Comment(text) => format!("<!--{}-->", text),
         }
+    }
+}
+
+fn inner_text(block: &Block) -> String {
+    fn from_text(text: &Text) -> String {
+        text.iter().map(from_inline).collect::<Vec<_>>().join(" ")
+    }
+    fn from_inline(inline: &Inline) -> String {
+        match inline {
+            Inline::Link(text, _) => from_text(text),
+            Inline::Image(alt, _) => alt.to_string(),
+            Inline::Code(text) => text.to_string(),
+            Inline::Emphasis(text) => from_text(text),
+            Inline::Strong(text) => from_text(text),
+            Inline::EmphasisAndStrong(text) => from_text(text),
+            Inline::Deleted(text) => from_text(text),
+            Inline::Plaintext(text) => text.to_string(),
+            _ => String::new(),
+        }
+    }
+    match block {
+        Block::Heading(_, label) => from_text(label),
+        Block::Paragraph(text) => from_text(text),
+        Block::Quoted(text) => from_text(text),
+        _ => String::new(),
     }
 }

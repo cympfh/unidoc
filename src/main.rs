@@ -1,11 +1,15 @@
 pub mod entity;
 pub mod parser;
+pub mod template;
 pub mod translator;
 
+use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::{self, Read, Write};
 use structopt::StructOpt;
+
+use crate::template::simple;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -13,6 +17,8 @@ struct Opt {
     pub debug: bool,
     #[structopt(long = "out", short = "o")]
     pub output: Option<String>,
+    #[structopt(long = "standalone", short = "s")]
+    pub standalone: bool,
     #[structopt(name = "input")]
     pub input: Option<String>,
 }
@@ -44,7 +50,7 @@ fn write(opt: &Opt, buf: &String) -> io::Result<()> {
     Ok(())
 }
 
-fn main() -> io::Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
         println!(">>> opt = {:?}", &opt);
@@ -55,7 +61,12 @@ fn main() -> io::Result<()> {
             println!(">>> markdown = {:?}", &markdown);
         }
         let tr = translator::Translator::new(true);
-        let html = tr.markdown(&markdown);
+        let (title, body) = tr.markdown(&markdown);
+        let html = if opt.standalone {
+            simple(title, body)?
+        } else {
+            body
+        };
         write(&opt, &html)?;
     } else {
         eprintln!("Something critical error");
