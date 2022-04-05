@@ -2,13 +2,18 @@ use crate::entity::html::{Html, HtmlDoc};
 use crate::entity::markdown::{
     Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text,
 };
+use crate::io;
+use crate::parser;
 use crate::{leaf, node};
+use std::path::Path;
 
-pub struct Translator {}
+pub struct Translator {
+    filedir: Option<String>,
+}
 
 impl Translator {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(filedir: Option<String>) -> Self {
+        Self { filedir }
     }
 
     /// Returns: (title, body)
@@ -40,6 +45,16 @@ impl Translator {
             Block::HorizontalRule => leaf!("<hr />"),
             Block::ListBlock(list) => self.list(&list),
             Block::Table(aligns, content, has_header) => self.table(&aligns, content, *has_header),
+            Block::Import(path) => {
+                if let Some(path) = find(&path, &self.filedir) {
+                    let content = io::read(&Some(path.to_string())).unwrap();
+                    let mkd = parser::markdown(&content).unwrap();
+                    let (_, htmldoc) = self.markdown(&mkd);
+                    htmldoc.as_html()
+                } else {
+                    panic!("Cannot find {}", path);
+                }
+            }
         }
     }
 
@@ -169,4 +184,20 @@ fn inner_text(block: &Block) -> String {
         Block::Quoted(text) => from_text(text),
         _ => String::new(),
     }
+}
+
+fn find(path: &String, filedir: &Option<String>) -> Option<String> {
+    let f = Path::new(path);
+    if f.is_file() {
+        return Some(path.to_string());
+    }
+    if f.is_relative() {
+        if let Some(dir) = filedir {
+            let f = Path::new(&dir).join(f);
+            if f.is_file() {
+                return Some(String::from(f.to_str().unwrap()));
+            }
+        }
+    }
+    None
 }

@@ -107,3 +107,11 @@ def code():
 ```markdown
 ---
 ```
+
+## Extended Syntax
+
+### Import Another Markdown
+
+```markdown
+@(./relative/another.md)
+```

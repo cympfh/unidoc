@@ -61,7 +61,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
     let parse_listblock = map(parse_list(0), |list| Block::ListBlock(list));
 
     let parse_paragraph = map(
-        terminated(many1(parse_text_line), alt((line_ending, success("")))),
+        terminated(many1(parse_text_line), alt((line_ending, success("")))), // TODO(success 要らない?)
         |texts: Vec<Vec<Inline>>| Block::Paragraph(texts.into_iter().flatten().collect()),
     );
 
@@ -74,6 +74,11 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         |texts: Vec<Vec<Inline>>| Block::Quoted(texts.into_iter().flatten().collect()),
     );
 
+    let parse_import = map(
+        terminated(delimited(tag("@("), is_not(")"), tag(")")), line_ending),
+        |path: &str| Block::Import(path.to_string()),
+    );
+
     alt((
         parse_hr,
         parse_heading,
@@ -81,6 +86,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_listblock,
         parse_table,
         parse_quoted,
+        parse_import,
         parse_paragraph,
     ))(input)
 }

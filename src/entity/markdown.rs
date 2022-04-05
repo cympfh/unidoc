@@ -9,6 +9,7 @@ pub enum Block {
     Code(Option<String>, String),
     HorizontalRule,
     Table(Vec<Align>, Vec<Vec<Text>>, bool), // (Alignments, Content, first_is_header?)
+    Import(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

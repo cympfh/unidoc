@@ -6,6 +6,7 @@ pub mod translator;
 
 use crate::translator::Translator;
 use std::error::Error;
+use std::path::Path;
 use structopt::StructOpt;
 
 use crate::template::simple;
@@ -31,12 +32,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     if opt.debug {
         eprintln!(">>> opt = {:?}", &opt);
     }
+
+    let filedir: Option<String> = opt
+        .input
+        .as_ref()
+        .map(|input| {
+            Path::new(&input)
+                .parent()
+                .map(|path| String::from(path.to_str().unwrap()))
+        })
+        .flatten();
+
     let content = io::read(&opt.input)?;
     if let Ok(markdown) = parser::markdown(content.as_str()) {
         if opt.debug {
             eprintln!(">>> markdown = {:?}", &markdown);
         }
-        let tr = Translator::new();
+        let tr = Translator::new(filedir);
         let (title, htmldoc) = tr.markdown(&markdown);
         if opt.debug {
             eprintln!(">>> htmldoc = {:?}", &htmldoc);
