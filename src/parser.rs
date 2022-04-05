@@ -120,33 +120,21 @@ fn parse_table(input: &str) -> ParseResult<Block> {
 
     let parse_headers = pair(parse_row, parse_rules);
 
-    // with header
-    map(
+    let parse_table_with_header = map(
         pair(parse_headers, many1(parse_row)),
         |((headers, aligns), body)| {
             let mut content = vec![headers];
             content.append(&mut body.clone());
             Block::Table(aligns, content, true)
         },
-    )(input)
+    );
+    let parse_table_without_header = map(many1(parse_row), |body| {
+        let m = body[0].len();
+        let aligns = (0..m).map(|_| Align::Left).into_iter().collect();
+        Block::Table(aligns, body, false)
+    });
 
-    // without header
-    // map(many1(parse_row), |body| Block::Table(vec![], body, false))(input)
-
-    // map(
-    //     pair(opt(parse_headers), many1(parse_row)),
-    //     |(header, body)| {
-    //         if let Some((headers, aligns)) = header {
-    //             let mut content = vec![headers];
-    //             content.append(&mut body.clone());
-    //             Block::Table(aligns, content, true)
-    //         } else {
-    //             let m = body[0].len();
-    //             let aligns = (0..m).map(|_| Align::Left).into_iter().collect();
-    //             Block::Table(aligns, body, true)
-    //         }
-    //     },
-    // )(input)
+    alt((parse_table_with_header, parse_table_without_header))(input)
 }
 
 /// Parse text without newline

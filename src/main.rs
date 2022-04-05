@@ -101,7 +101,11 @@ mod test_main {
         );
         assert_convert!(compact; "| A |\n|:-:|\n| a |\n",
             "",
-            "<table><thead><tr class=header><th>A</th></tr></thead><tbody><tr class=odd><td>a</td></tr></tbody></table>\n"
+            "<table><thead><tr class=header><th align=center>A</th></tr></thead><tbody><tr class=odd><td align=center>a</td></tr></tbody></table>\n"
+        );
+        assert_convert!(compact; "| A |\n| a |\n",
+            "",
+            "<table><tbody><tr class=odd><td align=left>A</td></tr><tr class=even><td align=left>a</td></tr></tbody></table>\n"
         );
     }
 

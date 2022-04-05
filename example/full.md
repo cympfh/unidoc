@@ -35,6 +35,12 @@ Link can have image as text: [![](https://cympfh.cc/favicon.ico)](//cympfh.cc)
 | a | b | left | c | r |
 |1|2|3|4|5|
 
+Tables without headers
+
+| A | B | C |
+| a | b | c |
+| 1 | 2 | 3 |
+
 ## Codes
 
 Inline code is `like this`.

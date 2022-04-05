@@ -133,7 +133,7 @@ impl Translator {
         match align {
             Align::Left => format!("<{} align=left>{}</{}>", tag, self.text(text), tag),
             Align::Right => format!("<{} align=right>{}</{}>", tag, self.text(text), tag),
-            _ => format!("<{}>{}</{}>", tag, self.text(text), tag),
+            Align::Center => format!("<{} align=center>{}</{}>", tag, self.text(text), tag),
         }
     }
 
