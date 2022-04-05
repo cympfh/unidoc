@@ -8,6 +8,13 @@ impl HtmlDoc {
     pub fn new(doc: Vec<Html>) -> Self {
         Self { doc }
     }
+    pub fn as_html(self) -> Html {
+        Html::Node(
+            Box::new(Html::Leaf(String::from("<div>"))),
+            self.doc,
+            Box::new(Html::Leaf(String::from("</div>"))),
+        )
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
