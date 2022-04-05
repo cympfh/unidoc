@@ -1,5 +1,6 @@
-use crate::entity::{Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text};
-
+use crate::entity::markdown::{
+    Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text,
+};
 use nom::branch::alt;
 use nom::bytes::complete::{
     is_not, tag, take, take_until, take_while, take_while1, take_while_m_n,
@@ -329,7 +330,7 @@ fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List>
 #[cfg(test)]
 mod test_parser {
 
-    use crate::entity::*;
+    use crate::entity::markdown::*;
     use crate::parser::markdown;
 
     macro_rules! cannot_parse {

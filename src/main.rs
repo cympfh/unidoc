@@ -1,13 +1,11 @@
 pub mod entity;
-pub mod html;
+pub mod io;
 pub mod parser;
 pub mod template;
 pub mod translator;
 
+use crate::translator::Translator;
 use std::error::Error;
-use std::fs::File;
-use std::io::BufReader;
-use std::io::{self, Read, Write};
 use structopt::StructOpt;
 
 use crate::template::simple;
@@ -22,55 +20,34 @@ struct Opt {
     pub standalone: bool,
     #[structopt(long = "compact", short = "c")]
     pub compact: bool,
+    #[structopt(long = "indent", default_value = "2")]
+    pub indent: usize,
     #[structopt(name = "input")]
     pub input: Option<String>,
-}
-
-fn read(opt: &Opt) -> io::Result<String> {
-    let mut content = String::new();
-    if let Some(input) = &opt.input {
-        let file = File::open(&input).unwrap();
-        let mut buf_reader = BufReader::new(file);
-        buf_reader.read_to_string(&mut content)?;
-    } else {
-        let stdin = io::stdin();
-        let mut handle = stdin.lock();
-        handle.read_to_string(&mut content)?;
-    }
-    if !content.ends_with('\n') {
-        content += "\n"
-    }
-    Ok(content)
-}
-
-fn write(opt: &Opt, buf: &String) -> io::Result<()> {
-    if let Some(output) = &opt.output {
-        let mut file = File::create(&output)?;
-        write!(file, "{}", buf)?;
-    } else {
-        print!("{}", buf);
-    }
-    Ok(())
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
-        println!(">>> opt = {:?}", &opt);
+        eprintln!(">>> opt = {:?}", &opt);
     }
-    let content = read(&opt)?;
+    let content = io::read(&opt.input)?;
     if let Ok(markdown) = parser::markdown(content.as_str()) {
         if opt.debug {
-            println!(">>> markdown = {:?}", &markdown);
+            eprintln!(">>> markdown = {:?}", &markdown);
         }
-        let tr = translator::Translator::new(opt.compact, 2);
-        let (title, body) = tr.markdown(&markdown);
+        let tr = Translator::new();
+        let (title, htmldoc) = tr.markdown(&markdown);
+        if opt.debug {
+            eprintln!(">>> htmldoc = {:?}", &htmldoc);
+        }
+        let body = htmldoc.show(opt.compact, opt.indent);
         let html = if opt.standalone {
             simple(title, body)?
         } else {
             body
         };
-        write(&opt, &html)?;
+        io::write(&opt.output, &html)?;
     } else {
         eprintln!("Something critical error");
     }
@@ -81,15 +58,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 mod test_main {
 
     use crate::parser;
-    use crate::translator;
+    use crate::translator::Translator;
 
     macro_rules! assert_convert {
         ($compact:expr, $markdown:expr, $title:expr, $body:expr) => {
-            let tr = translator::Translator::new($compact, 2);
-            assert_eq!(
-                tr.markdown(&parser::markdown($markdown).unwrap()),
-                (String::from($title), String::from($body))
-            );
+            let mkd = parser::markdown($markdown).unwrap();
+            let tr = Translator::new();
+            let (title, htmldoc) = tr.markdown(&mkd);
+            let body = htmldoc.show($compact, 2);
+            assert_eq!((title, body), (String::from($title), String::from($body)));
         };
         (compact; $markdown:expr, $title:expr, $body:expr) => {
             assert_convert!(true, $markdown, $title, $body)
