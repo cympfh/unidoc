@@ -54,10 +54,12 @@ impl ListItem {
 }
 
 pub type Text = Vec<Inline>;
+type Url = String;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Inline {
-    Link(Text, String), // Text, Url
+    Link(Text, Url),
+    HyperLink(Url),
     Image(String, String),
     Code(String),
     Emphasis(Text),
