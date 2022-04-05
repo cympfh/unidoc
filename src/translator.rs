@@ -1,68 +1,128 @@
 use crate::entity::{Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text};
+use crate::html;
+use crate::html::{Html, HtmlDoc};
+use std::collections::VecDeque;
 
 pub struct Translator {
     compact: bool,
+    indent: usize,
 }
 
 impl Translator {
-    pub fn new(compact: bool) -> Self {
-        Self { compact }
+    pub fn new(compact: bool, indent: usize) -> Self {
+        Self { compact, indent }
     }
 
     /// Returns: (title, body)
     pub fn markdown(&self, doc: &Markdown) -> (String, String) {
-        let mut html = vec![];
-        for block in doc.iter() {
-            let b = match block {
-                Block::Heading(level, label) => {
-                    format!("<h{}>{}</h{}>", level, self.text(&label), level)
-                }
-                Block::Paragraph(text) => {
-                    format!("<p>{}</p>", self.text(&text))
-                }
-                Block::Quoted(text) => {
-                    format!("<q>{}</q>", self.text(&text))
-                }
-                Block::Code(language, code) => {
-                    let class = if let Some(lang) = language {
-                        format!("code {}", lang)
-                    } else {
-                        format!("code")
-                    };
-                    format!("<pre><code class=\"{}\">{}</code></pre>", class, code)
-                }
-                Block::HorizontalRule => format!("<hr />"),
-                Block::ListBlock(list) => self.list(&list),
-                Block::Table(aligns, content, has_header) => {
-                    self.table(&aligns, content, *has_header)
-                }
-            };
-            html.push(b);
-        }
-
         let title = inner_text(&doc[0]);
-        let mut body = html.join("");
-        body.push('\n');
-
+        let doc: HtmlDoc = doc.iter().map(|md| self.block(md)).collect();
+        let body = if self.compact {
+            self.show_compact(&doc)
+        } else {
+            self.show_pretty(&doc)
+        };
         (title, body)
     }
 
-    fn list(&self, list: &List) -> String {
+    fn show_compact(&self, doc: &HtmlDoc) -> String {
+        let mut lines: Vec<String> = vec![];
+        let mut queue = VecDeque::new();
+        for block in doc.iter() {
+            queue.push_back(block);
+        }
+        while let Some(block) = queue.pop_front() {
+            match block {
+                Html::Line(line) => lines.push(line.to_string()),
+                Html::Block(doc) => {
+                    for child in doc.iter().rev() {
+                        queue.push_front(child);
+                    }
+                }
+                _ => {}
+            }
+        }
+        lines.join("") + "\n"
+    }
+
+    fn show_pretty(&self, doc: &HtmlDoc) -> String {
+        let mut indent = 0;
+        let mut tab = String::new();
+        let mut lines: Vec<String> = vec![];
+        let mut queue = VecDeque::new();
+        for block in doc.iter() {
+            queue.push_back(block);
+        }
+        while let Some(block) = queue.pop_front() {
+            match block {
+                Html::Line(line) => lines.push(format!("{}{}", tab, line)),
+                Html::Block(doc) => {
+                    assert!(doc.len() >= 2);
+                    queue.push_front(&doc[doc.len() - 1]);
+                    queue.push_front(&Html::Deindent);
+                    for i in (1..doc.len() - 1).rev() {
+                        queue.push_front(&doc[i]);
+                    }
+                    queue.push_front(&Html::Indent);
+                    queue.push_front(&doc[0]);
+                }
+                Html::Indent => {
+                    indent += self.indent;
+                    tab += "  ";
+                }
+                Html::Deindent => {
+                    indent -= self.indent;
+                    tab = (0..indent).map(|_| ' ').collect();
+                }
+            }
+        }
+        lines.join("\n") + "\n"
+    }
+
+    fn block(&self, block: &Block) -> Html {
+        match block {
+            Block::Heading(level, label) => {
+                html![format!("<h{}>{}</h{}>", level, self.text(&label), level)]
+            }
+            Block::Paragraph(text) => {
+                html![format!("<p>{}</p>", self.text(&text))]
+            }
+            Block::Quoted(text) => {
+                html![format!("<q>{}</q>", self.text(&text))]
+            }
+            Block::Code(language, code) => {
+                let class = if let Some(lang) = language {
+                    format!("code {}", lang)
+                } else {
+                    format!("code")
+                };
+                html![format!(
+                    "<pre><code class=\"{}\">{}</code></pre>",
+                    class, code
+                )]
+            }
+            Block::HorizontalRule => html![format!("<hr />")],
+            Block::ListBlock(list) => self.list(&list),
+            Block::Table(aligns, content, has_header) => self.table(&aligns, content, *has_header),
+        }
+    }
+
+    fn list(&self, list: &List) -> Html {
         let List { order_type, items } = list;
         let (begin, end) = match order_type {
             ListOrderType::Unordered => ("<ul>", "</ul>"),
             ListOrderType::OrderedNumbers => ("<ol>", "</ol>"),
             ListOrderType::OrderedAlphabets => ("<ol type=a>", "</ol>"),
         };
-        let mut ret = vec![begin.to_string()];
+        let mut lines = vec![html![begin.to_string()]];
         for item in items.iter() {
-            ret.push(self.listitem(item));
+            lines.push(self.listitem(item));
         }
-        ret.push(end.to_string());
-        ret.join("")
+        lines.push(html![end.to_string()]);
+        Html::Block(lines)
     }
 
-    fn listitem(&self, listitem: &ListItem) -> String {
+    fn listitem(&self, listitem: &ListItem) -> Html {
         let ListItem {
             checked,
             label,
@@ -78,48 +138,56 @@ impl Translator {
         } else {
             ""
         };
-        let children = if let Some(children) = children {
-            self.list(children)
+        let li = html![format!("<li>{}{}</li>", checkbox, self.text(label))];
+        if let Some(children) = children {
+            html![li, self.list(children)]
         } else {
-            String::new()
-        };
-        format!("<li>{}{}</li>{}", checkbox, self.text(label), children)
+            li
+        }
     }
 
-    fn table(&self, aligns: &Vec<Align>, content: &Vec<Vec<Text>>, has_header: bool) -> String {
-        let mut frags = vec![];
-        frags.push(format!("<table>"));
+    fn table(&self, aligns: &Vec<Align>, content: &Vec<Vec<Text>>, has_header: bool) -> Html {
+        let mut lines = vec![];
+        lines.push(html![format!("<table>")]);
+        // thead
         if has_header {
-            frags.push(format!("<thead>"));
-            frags.push(format!("<tr class=header>"));
+            let mut tr = vec![html![format!("<tr class=header>")]];
             for (t, align) in content[0].iter().zip(aligns.iter()) {
-                frags.push(self.cell(t, align, true));
+                tr.push(self.cell(t, align, true));
             }
-            frags.push(format!("</tr>"));
-            frags.push(format!("</thead>"));
+            tr.push(html![format!("</tr>")]);
+            lines.push(html![
+                html![format!("<thead>")],
+                Html::Block(tr),
+                html![format!("</thead>")],
+            ]);
         }
+        // tbody
         let start = if has_header { 1 } else { 0 };
-        frags.push(format!("<tbody>"));
+        let mut tbody = vec![html![format!("<tbody>")]];
         for i in start..content.len() {
             let class = if (i - start) % 2 == 0 { "odd" } else { "even" };
-            frags.push(format!("<tr class={}>", class));
+            let mut tr = vec![html![format!("<tr class={}>", class)]];
             for (t, align) in content[i].iter().zip(aligns.iter()) {
-                frags.push(self.cell(t, align, false));
+                tr.push(self.cell(t, align, false));
             }
-            frags.push(format!("</tr>"));
+            tr.push(html![format!("</tr>")]);
+            tbody.push(Html::Block(tr));
         }
-        frags.push(format!("</tbody>"));
-        frags.push(format!("</table>"));
-        frags.join("")
+        tbody.push(html![format!("</tbody>")]);
+        lines.push(Html::Block(tbody));
+        lines.push(html![format!("</table>")]);
+        Html::Block(lines)
     }
 
-    fn cell(&self, text: &Text, align: &Align, is_header: bool) -> String {
+    fn cell(&self, text: &Text, align: &Align, is_header: bool) -> Html {
         let tag = if is_header { "th" } else { "td" };
-        match align {
+        let html = match align {
             Align::Left => format!("<{} align=left>{}</{}>", tag, self.text(text), tag),
             Align::Right => format!("<{} align=right>{}</{}>", tag, self.text(text), tag),
             _ => format!("<{}>{}</{}>", tag, self.text(text), tag),
-        }
+        };
+        Html::Line(html)
     }
 
     fn text(&self, text: &Text) -> String {

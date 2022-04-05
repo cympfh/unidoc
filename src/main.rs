@@ -1,4 +1,5 @@
 pub mod entity;
+pub mod html;
 pub mod parser;
 pub mod template;
 pub mod translator;
@@ -19,6 +20,8 @@ struct Opt {
     pub output: Option<String>,
     #[structopt(long = "standalone", short = "s")]
     pub standalone: bool,
+    #[structopt(long = "compact", short = "c")]
+    pub compact: bool,
     #[structopt(name = "input")]
     pub input: Option<String>,
 }
@@ -60,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if opt.debug {
             println!(">>> markdown = {:?}", &markdown);
         }
-        let tr = translator::Translator::new(true);
+        let tr = translator::Translator::new(opt.compact, 2);
         let (title, body) = tr.markdown(&markdown);
         let html = if opt.standalone {
             simple(title, body)?
