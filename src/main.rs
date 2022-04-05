@@ -3,6 +3,7 @@ pub mod io;
 pub mod parser;
 pub mod template;
 pub mod translator;
+pub mod webpage;
 
 use crate::translator::Translator;
 use std::error::Error;

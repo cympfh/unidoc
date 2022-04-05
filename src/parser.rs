@@ -204,6 +204,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         ),
         |(text, url): (Text, &str)| Inline::Link(text, url.to_string()),
     );
+    let parse_hyperlink = map(
+        delimited(tag("[["), is_not("]]"), tag("]]")),
+        |url: &str| Inline::HyperLink(url.to_string()),
+    );
     let parse_comment = map(
         delimited(tag("<!--"), is_not("-->"), tag("-->")),
         |text: &str| Inline::Comment(text.to_string()),
@@ -212,6 +216,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     many1(preceded(
         space0,
         alt((
+            parse_hyperlink,
             parse_link,
             parse_image,
             parse_emphasis_and_strong,
@@ -475,6 +480,15 @@ mod test_parser {
                     vec![text!("text")],
                     String::from("link"),
                 ),
+            }]
+        );
+        assert_parse!(
+            "this is a [[hyperlink]]\n",
+            vec![p! {
+                text!("this"),
+                text!("is"),
+                text!("a"),
+                Inline::HyperLink(String::from("hyperlink")),
             }]
         );
         assert_parse!(
