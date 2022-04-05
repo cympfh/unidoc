@@ -104,4 +104,14 @@ mod test_main {
             "<table><thead><tr class=header><th>A</th></tr></thead><tbody><tr class=odd><td>a</td></tr></tbody></table>\n"
         );
     }
+
+    #[test]
+    fn test_safe_encode() {
+        assert_convert!(compact; "`<code>`\n", "&lt;code&gt;", "<p><code>&lt;code&gt;</code></p>\n");
+    }
+
+    #[test]
+    fn test_raw_html() {
+        assert_convert!(compact; "# test\n<div>Hi</div>\n", "test", "<h1>test</h1><p><div>Hi</div></p>\n");
+    }
 }

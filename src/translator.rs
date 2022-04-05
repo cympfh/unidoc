@@ -149,13 +149,13 @@ impl Translator {
             Inline::Link(text, url) => format!("<a href=\"{}\">{}</a>", url, self.text(text)),
             Inline::HyperLink(url) => {
                 if let Some(title) = WebPage::new(url.to_string()).title() {
-                    format!("<a href=\"{}\">{}</a>", url, title)
+                    format!("<a href=\"{}\">{}</a>", url, encode(&title))
                 } else {
                     format!("<a href=\"{}\">{}</a>", url, url)
                 }
             }
             Inline::Image(alt, image) => format!("<img src=\"{}\" alt=\"{}\" />", image, alt),
-            Inline::Code(text) => format!("<code>{}</code>", text),
+            Inline::Code(text) => format!("<code>{}</code>", encode(text)),
             Inline::Emphasis(text) => format!("<em>{}</em>", self.text(text)),
             Inline::Strong(text) => format!("<strong>{}</strong>", self.text(text)),
             Inline::EmphasisAndStrong(text) => {
@@ -176,13 +176,13 @@ fn inner_text(block: &Block) -> String {
     fn from_inline(inline: &Inline) -> String {
         match inline {
             Inline::Link(text, _) => from_text(text),
-            Inline::Image(alt, _) => alt.to_string(),
-            Inline::Code(text) => text.to_string(),
+            Inline::Image(alt, _) => encode(alt),
+            Inline::Code(text) => encode(text),
             Inline::Emphasis(text) => from_text(text),
             Inline::Strong(text) => from_text(text),
             Inline::EmphasisAndStrong(text) => from_text(text),
             Inline::Deleted(text) => from_text(text),
-            Inline::Plaintext(text) => text.to_string(),
+            Inline::Plaintext(text) => encode(text),
             _ => String::new(),
         }
     }
@@ -208,4 +208,8 @@ fn find(path: &String, filedir: &Option<String>) -> Option<String> {
         }
     }
     None
+}
+
+fn encode(html: &String) -> String {
+    html_escape::encode_safe(html).to_string()
 }
