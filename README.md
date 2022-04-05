@@ -115,3 +115,9 @@ def code():
 ```markdown
 @(./relative/another.md)
 ```
+
+### Hyperlink
+
+```markdown
+This is inline hyperlink: [[http://example.com]].
+```
