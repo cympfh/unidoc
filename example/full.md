@@ -67,3 +67,19 @@ you must put two spaces `  `  at the end of line.
 > Quote is another paragraph.
 > Ofcource, you can use **any markdown** in quoting.
 
+## (Ex) Import Another
+
+```markdown
+@(list.md)
+```
+
+@(list.md)
+
+## (Ex) Inner HyperLink
+
+`[[url]]` makes a nicely link: [[http://example.com]].
+The text for link is the `<title>` of the web page.
+
+If something error while fetching web page, url will be used alternatively.
+[[http://this.is.not.existing-site.co.com.tokyo.jp]]
+

@@ -4,6 +4,7 @@ use crate::entity::markdown::{
 };
 use crate::io;
 use crate::parser;
+use crate::webpage::WebPage;
 use crate::{leaf, node};
 use std::path::Path;
 
@@ -146,6 +147,13 @@ impl Translator {
     fn inline(&self, inline: &Inline) -> String {
         match inline {
             Inline::Link(text, url) => format!("<a href=\"{}\">{}</a>", url, self.text(text)),
+            Inline::HyperLink(url) => {
+                if let Some(title) = WebPage::new(url.to_string()).title() {
+                    format!("<a href=\"{}\">{}</a>", url, title)
+                } else {
+                    format!("<a href=\"{}\">{}</a>", url, url)
+                }
+            }
             Inline::Image(alt, image) => format!("<img src=\"{}\" alt=\"{}\" />", image, alt),
             Inline::Code(text) => format!("<code>{}</code>", text),
             Inline::Emphasis(text) => format!("<em>{}</em>", self.text(text)),
