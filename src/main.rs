@@ -48,7 +48,7 @@ fn write(opt: &Opt, buf: &String) -> io::Result<()> {
         let mut file = File::create(&output)?;
         write!(file, "{}", buf)?;
     } else {
-        println!("{}", buf);
+        print!("{}", buf);
     }
     Ok(())
 }
