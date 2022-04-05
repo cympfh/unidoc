@@ -832,4 +832,19 @@ fn main(){{}}```
             }]
         );
     }
+
+    #[test]
+    fn test_import() {
+        assert_parse!(
+            "@(another.md)\n",
+            vec![Block::Import(String::from("another.md"))]
+        );
+        assert_parse!(
+            "# h1\n@(another.md)\n",
+            vec![
+                Block::Heading(1, vec![text!("h1")]),
+                Block::Import(String::from("another.md"))
+            ]
+        );
+    }
 }

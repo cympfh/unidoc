@@ -75,7 +75,7 @@ mod test_main {
     macro_rules! assert_convert {
         ($compact:expr, $markdown:expr, $title:expr, $body:expr) => {
             let mkd = parser::markdown($markdown).unwrap();
-            let tr = Translator::new();
+            let tr = Translator::new(None);
             let (title, htmldoc) = tr.markdown(&mkd);
             let body = htmldoc.show($compact, 2);
             assert_eq!((title, body), (String::from($title), String::from($body)));
