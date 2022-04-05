@@ -84,44 +84,34 @@ mod test_main {
     use crate::translator;
 
     macro_rules! assert_convert {
-        ($compact:expr, $markdown:expr, $html:expr) => {
-            let tr = translator::Translator::new($compact);
+        ($compact:expr, $markdown:expr, $title:expr, $body:expr) => {
+            let tr = translator::Translator::new($compact, 2);
             assert_eq!(
                 tr.markdown(&parser::markdown($markdown).unwrap()),
-                String::from($html)
+                (String::from($title), String::from($body))
             );
         };
-        (compact; $markdown:expr, $html:expr) => {
-            assert_convert!(true, $markdown, $html)
-        };
-        (full; $markdown:expr, $html:expr) => {
-            assert_convert!(false, $markdown, $html)
+        (compact; $markdown:expr, $title:expr, $body:expr) => {
+            assert_convert!(true, $markdown, $title, $body)
         };
     }
 
     #[test]
     fn test_convert() {
-        assert_convert!(compact; "# h1\n", "<h1>h1</h1>\n");
-        assert_convert!(compact; "## h2\n", "<h2>h2</h2>\n");
-        assert_convert!(compact; "a  b\nc\n", "<p>a b c</p>\n");
-        assert_convert!(compact; "a  \nb\nc\n\n---\n", "<p>a <br /> b c</p><hr />\n");
-        assert_convert!(compact; "*a* <!-- b -->\n", "<p><em>a</em> <!-- b --></p>\n");
-        assert_convert!(
-            compact;
-            "- a\n- b\n- c\n",
+        assert_convert!(compact; "# h1\n", "h1", "<h1>h1</h1>\n");
+        assert_convert!(compact; "## h2\n", "h2", "<h2>h2</h2>\n");
+        assert_convert!(compact; "a  b\nc\n", "a b c", "<p>a b c</p>\n");
+        assert_convert!(compact; "a  \nb\nc\n\n---\n", "a  b c", "<p>a <br /> b c</p><hr />\n");
+        assert_convert!(compact; "*a* <!-- b -->\n",
+            "a ",
+            "<p><em>a</em> <!-- b --></p>\n");
+        assert_convert!(compact; "- a\n- b\n- c\n",
+            "",
             "<ul><li>a</li><li>b</li><li>c</li></ul>\n"
         );
-        assert_convert!(compact;
-            "| A |\n|:-:|\n| a |\n",
-            "<table><thead><tr class=header><th>A</th></tr></thead><tbody><tr class=odd><td>A</td></tr></tbody></table>\n"
+        assert_convert!(compact; "| A |\n|:-:|\n| a |\n",
+            "",
+            "<table><thead><tr class=header><th>A</th></tr></thead><tbody><tr class=odd><td>a</td></tr></tbody></table>\n"
         );
     }
-
-    // #[test]
-    // fn test_examples_full() {
-    //     use std::fs::read_to_string;
-    //     let content = read_to_string("./examples/full.md").unwrap();
-    //     let expected = read_to_string("./examples/full.html").unwrap();
-    //     assert_convert!(content.as_str(), expected.as_str());
-    // }
 }
