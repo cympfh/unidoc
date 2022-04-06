@@ -16,9 +16,13 @@ pub fn simple(title: String, body: String) -> Result<String, RenderError> {
   <meta name="generator" content="unidoc" />
   <title>{{title}}</title>
   <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />
+  <link rel="stylesheet" href="https://cympfh.cc/resources/css/web_emb.css" />
 </head>
 <body>
 {{{body}}}
+  <script src="https://cympfh.cc/resources/js/youtube.js"></script>
+  <script src="https://cympfh.cc/resources/js/web_emb.js"></script>
 </body>
 </html>"#;
     let reg = Handlebars::new();

@@ -79,6 +79,18 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         |path: &str| Block::Import(path.to_string()),
     );
 
+    let parse_hyperlink = map(
+        terminated(
+            delimited(
+                pair(tag("{{"), space0),
+                is_not(" }"),
+                pair(space0, tag("}}")),
+            ),
+            line_ending,
+        ),
+        |url: &str| Block::HyperLink(url.to_string()),
+    );
+
     alt((
         parse_hr,
         parse_heading,
@@ -87,6 +99,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_table,
         parse_quoted,
         parse_import,
+        parse_hyperlink,
         parse_paragraph,
     ))(input)
 }
@@ -848,5 +861,11 @@ fn main(){{}}```
                 Block::Import(String::from("another.md"))
             ]
         );
+    }
+
+    #[test]
+    fn test_hyperlink_block() {
+        assert_parse!("{{url}}\n", vec![Block::HyperLink(String::from("url"))]);
+        assert_parse!("{{ url }}\n", vec![Block::HyperLink(String::from("url"))]);
     }
 }

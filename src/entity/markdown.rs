@@ -10,6 +10,7 @@ pub enum Block {
     HorizontalRule,
     Table(Vec<Align>, Vec<Vec<Text>>, bool), // (Alignments, Content, first_is_header?)
     Import(String),
+    HyperLink(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

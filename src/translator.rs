@@ -1,3 +1,4 @@
+use crate::blogcard::blogcard;
 use crate::entity::html::{Html, HtmlDoc};
 use crate::entity::markdown::{
     Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text,
@@ -56,6 +57,7 @@ impl Translator {
                     panic!("Cannot find {}", path);
                 }
             }
+            Block::HyperLink(url) => blogcard(url.to_string()),
         }
     }
 

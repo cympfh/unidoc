@@ -121,3 +121,9 @@ def code():
 ```markdown
 This is inline hyperlink: [[http://example.com]].
 ```
+
+```markdown
+Hyperlink as a block generates Blogcard:
+
+{{ https://cympfh.cc/ }}
+```

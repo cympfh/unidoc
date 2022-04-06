@@ -1,3 +1,4 @@
+pub mod blogcard;
 pub mod entity;
 pub mod io;
 pub mod parser;
@@ -117,5 +118,14 @@ mod test_main {
     #[test]
     fn test_raw_html() {
         assert_convert!(compact; "# test\n<div>Hi</div>\n", "test", "<h1>test</h1><p><div>Hi</div></p>\n");
+    }
+
+    #[test]
+    fn test_link_block() {
+        assert_convert!(compact;
+            "# test\n{{ https://www.youtube.com/watch?v=_FKRL-t8aM8 }}\n",
+            "test",
+            "<h1>test</h1><div class=\"youtube\" src-id=\"_FKRL-t8aM8\"></div>\n"
+        );
     }
 }
