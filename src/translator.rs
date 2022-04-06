@@ -1,3 +1,4 @@
+use crate::blogcard::blogcard;
 use crate::entity::html::{Html, HtmlDoc};
 use crate::entity::markdown::{
     Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text,
@@ -56,6 +57,7 @@ impl Translator {
                     panic!("Cannot find {}", path);
                 }
             }
+            Block::HyperLink(url) => blogcard(url.to_string()),
         }
     }
 
@@ -171,19 +173,25 @@ impl Translator {
 
 fn inner_text(block: &Block) -> String {
     fn from_text(text: &Text) -> String {
-        text.iter().map(from_inline).collect::<Vec<_>>().join(" ")
+        text.iter()
+            .map(from_inline)
+            .flatten()
+            .collect::<Vec<String>>()
+            .join(" ")
     }
-    fn from_inline(inline: &Inline) -> String {
+    fn from_inline(inline: &Inline) -> Option<String> {
         match inline {
-            Inline::Link(text, _) => from_text(text),
-            Inline::Image(alt, _) => encode(alt),
-            Inline::Code(text) => encode(text),
-            Inline::Emphasis(text) => from_text(text),
-            Inline::Strong(text) => from_text(text),
-            Inline::EmphasisAndStrong(text) => from_text(text),
-            Inline::Deleted(text) => from_text(text),
-            Inline::Plaintext(text) => encode(text),
-            _ => String::new(),
+            Inline::Link(text, _) => Some(from_text(text)),
+            Inline::Image(alt, _) => Some(encode(alt)),
+            Inline::Code(text) => Some(encode(text)),
+            Inline::Emphasis(text) => Some(from_text(text)),
+            Inline::Strong(text) => Some(from_text(text)),
+            Inline::EmphasisAndStrong(text) => Some(from_text(text)),
+            Inline::Deleted(text) => Some(from_text(text)),
+            Inline::Plaintext(text) => Some(encode(text)),
+            Inline::HyperLink(url) => Some(url.to_string()),
+            Inline::Newline => None,
+            Inline::Comment(_) => None,
         }
     }
     match block {
