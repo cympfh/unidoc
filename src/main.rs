@@ -92,9 +92,9 @@ mod test_main {
         assert_convert!(compact; "# h1\n", "h1", "<h1>h1</h1>\n");
         assert_convert!(compact; "## h2\n", "h2", "<h2>h2</h2>\n");
         assert_convert!(compact; "a  b\nc\n", "a b c", "<p>a b c</p>\n");
-        assert_convert!(compact; "a  \nb\nc\n\n---\n", "a  b c", "<p>a <br /> b c</p><hr />\n");
+        assert_convert!(compact; "a  \nb\nc\n\n---\n", "a b c", "<p>a <br /> b c</p><hr />\n");
         assert_convert!(compact; "*a* <!-- b -->\n",
-            "a ",
+            "a",
             "<p><em>a</em> <!-- b --></p>\n");
         assert_convert!(compact; "- a\n- b\n- c\n",
             "",
@@ -107,6 +107,10 @@ mod test_main {
         assert_convert!(compact; "| A |\n| a |\n",
             "",
             "<table><tbody><tr class=odd><td align=left>A</td></tr><tr class=even><td align=left>a</td></tr></tbody></table>\n"
+        );
+        assert_convert!(compact; "[[http://example.com/]]\n",
+            "http://example.com/",
+            "<p><a href=\"http://example.com/\">Example Domain</a></p>\n"
         );
     }
 
