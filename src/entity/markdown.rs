@@ -1,4 +1,6 @@
 pub type Markdown = Vec<Block>;
+type Url = String;
+type FilePath = String;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Block {
@@ -7,10 +9,11 @@ pub enum Block {
     Paragraph(Text),
     Quoted(Text),
     Code(Option<String>, String),
+    CodeImport(Option<String>, FilePath),
     HorizontalRule,
     Table(Vec<Align>, Vec<Vec<Text>>, bool), // (Alignments, Content, first_is_header?)
-    Import(String),
-    HyperLink(String),
+    Import(FilePath),
+    HyperLink(Url),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -55,13 +58,12 @@ impl ListItem {
 }
 
 pub type Text = Vec<Inline>;
-type Url = String;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Inline {
     Link(Text, Url),
     HyperLink(Url),
-    Image(String, String),
+    Image(String, Url),
     Code(String),
     Emphasis(Text),
     Strong(Text),

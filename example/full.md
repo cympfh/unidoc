@@ -73,13 +73,21 @@ you must put two spaces `  `  at the end of line.
 > Quote is another paragraph.
 > Ofcource, you can use **any markdown** in quoting.
 
-## (Ex) Import Another
+## (Ex) Import Another Markdown
 
 ```markdown
 @(list.md)
 ```
 
 @(list.md)
+
+## (Ex) Import Another as a Code block
+
+```markdown
+@[rust](sample.rs)
+```
+
+@[rust](sample.rs)
 
 ## (Ex) Inner HyperLink
 

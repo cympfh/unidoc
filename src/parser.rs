@@ -91,6 +91,19 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         |url: &str| Block::HyperLink(url.to_string()),
     );
 
+    let parse_code_import = map(
+        terminated(
+            pair(
+                delimited(tag("@["), opt(is_not("]")), tag("]")),
+                delimited(tag("("), is_not(")"), tag(")")),
+            ),
+            line_ending,
+        ),
+        |(lang, path): (Option<&str>, &str)| {
+            Block::CodeImport(lang.map(|s| s.to_string()), path.to_string())
+        },
+    );
+
     alt((
         parse_hr,
         parse_heading,
@@ -99,6 +112,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_table,
         parse_quoted,
         parse_import,
+        parse_code_import,
         parse_hyperlink,
         parse_paragraph,
     ))(input)
@@ -867,5 +881,20 @@ fn main(){{}}```
     fn test_hyperlink_block() {
         assert_parse!("{{url}}\n", vec![Block::HyperLink(String::from("url"))]);
         assert_parse!("{{ url }}\n", vec![Block::HyperLink(String::from("url"))]);
+    }
+
+    #[test]
+    fn test_code_import() {
+        assert_parse!(
+            "@[rust](main.rs)\n",
+            vec![Block::CodeImport(
+                Some(String::from("rust")),
+                String::from("main.rs")
+            )]
+        );
+        assert_parse!(
+            "@[](main.rs)\n",
+            vec![Block::CodeImport(None, String::from("main.rs"))]
+        );
     }
 }
