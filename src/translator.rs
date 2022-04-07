@@ -58,6 +58,15 @@ impl Translator {
                 }
             }
             Block::HyperLink(url) => blogcard(url.to_string()),
+            Block::CodeImport(language, path) => {
+                if let Some(path) = find(&path, &self.filedir) {
+                    let content = io::read(&Some(path.to_string())).unwrap();
+                    let codeblock = Block::Code(language.clone(), content.to_string());
+                    self.block(&codeblock)
+                } else {
+                    panic!("Cannot find {}", path);
+                }
+            }
         }
     }
 

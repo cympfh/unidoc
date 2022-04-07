@@ -116,6 +116,12 @@ def code():
 @(./relative/another.md)
 ```
 
+### Import Code
+
+```markdown
+@[rust](./sample.rs)
+```
+
 ### Hyperlink
 
 ```markdown
