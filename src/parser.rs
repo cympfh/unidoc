@@ -191,13 +191,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         Inline::Emphasis,
     );
     let parse_deleted = map(
-        map_parser(
-            alt((
-                delimited(tag("~~"), is_not("~~"), tag("~~")),
-                delimited(tag("~"), is_not("~"), tag("~")),
-            )),
-            parse_text,
-        ),
+        map_parser(delimited(tag("~~"), is_not("~~"), tag("~~")), parse_text),
         Inline::Deleted,
     );
     let parse_code = map(delimited(tag("`"), is_not("`"), tag("`")), |text: &str| {
@@ -262,7 +256,7 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
             tag(" "),
             tag("*"),
             tag("`"),
-            tag("~"),
+            tag("~~"),
             tag("["),
             tag("]"),
             tag("!["),
@@ -529,6 +523,12 @@ mod test_parser {
                 Inline::EmphasisAndStrong(vec![text!("!")]),
             }]
         );
+        assert_parse!(
+            "~~Hello~~\n",
+            vec![p! { Inline::Deleted(vec![text!("Hello")]) }]
+        );
+        assert_parse!("~Hello~\n", vec![p! { text!("~Hello~") }]);
+        assert_parse!("~Hello\n", vec![p! { text!("~Hello") }]);
     }
 
     #[test]
