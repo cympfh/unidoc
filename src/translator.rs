@@ -38,7 +38,7 @@ impl Translator {
             }
             Block::Code(language, code) => {
                 let class = if let Some(lang) = language {
-                    format!("code {}", lang)
+                    format!("code language-{}", lang)
                 } else {
                     format!("code")
                 };

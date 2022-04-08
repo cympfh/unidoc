@@ -93,6 +93,9 @@ def code():
 ```
 ````
 
+Prism.js will be used for Syntax highlight.
+Please check [this](https://prismjs.com/#basic-usage) to see language support.
+
 ### Table
 
 ```markdown
