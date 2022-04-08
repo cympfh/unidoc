@@ -270,13 +270,17 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
     );
     let escaped_char = map(
         alt((
-            tag("\\*"),
             tag("\\`"),
+            tag("\\~"),
+            tag("\\<"),
+            tag("\\>"),
+            tag("\\|"),
+            tag("\\ "),
+            tag("\\!"),
             tag("\\["),
             tag("\\]"),
-            tag("\\~"),
-            tag("\\!"),
-            tag("\\|"),
+            tag("\\*"),
+            tag("\\\\"),
         )),
         |e: &str| &e[1..2],
     );
