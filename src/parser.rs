@@ -270,13 +270,17 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
     );
     let escaped_char = map(
         alt((
-            tag("\\*"),
             tag("\\`"),
+            tag("\\~"),
+            tag("\\<"),
+            tag("\\>"),
+            tag("\\|"),
+            tag("\\ "),
+            tag("\\!"),
             tag("\\["),
             tag("\\]"),
-            tag("\\~"),
-            tag("\\!"),
-            tag("\\|"),
+            tag("\\*"),
+            tag("\\\\"),
         )),
         |e: &str| &e[1..2],
     );
@@ -529,6 +533,22 @@ mod test_parser {
         );
         assert_parse!("~Hello~\n", vec![p! { text!("~Hello~") }]);
         assert_parse!("~Hello\n", vec![p! { text!("~Hello") }]);
+    }
+
+    #[test]
+    fn test_escape() {
+        assert_parse!(
+            "a\\*b\n",
+            vec![p! {
+                text!("a*b"),
+            }]
+        );
+        assert_parse!(
+            "\\[\\]\\<\\>\\~\\*\\!\\|\\\\\n",
+            vec![p! {
+                text!("[]<>~*!|\\"),
+            }]
+        );
     }
 
     #[test]
