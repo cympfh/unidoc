@@ -58,7 +58,7 @@ def main():
     pass
 ```
 
-Maybe this is not yet highlighted...
+This block is styled with [Prism.js](https://prismjs.com/#basic-usage).
 
 ## Paragraph.
 
