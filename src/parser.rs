@@ -536,6 +536,22 @@ mod test_parser {
     }
 
     #[test]
+    fn test_escape() {
+        assert_parse!(
+            "a\\*b\n",
+            vec![p! {
+                text!("a*b"),
+            }]
+        );
+        assert_parse!(
+            "\\[\\]\\<\\>\\~\\*\\!\\|\\\\\n",
+            vec![p! {
+                text!("[]<>~*!|\\"),
+            }]
+        );
+    }
+
+    #[test]
     fn test_paragraph() {
         cannot_parse!("Hi", "Markdown must ends with newline");
         assert_parse!(
