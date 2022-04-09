@@ -11,6 +11,7 @@ use std::error::Error;
 use std::path::Path;
 use structopt::StructOpt;
 
+use crate::entity::html::HtmlDoc;
 use crate::template::simple;
 
 #[derive(Debug, StructOpt)]
@@ -25,8 +26,33 @@ struct Opt {
     pub compact: bool,
     #[structopt(long = "indent", default_value = "2")]
     pub indent: usize,
-    #[structopt(name = "input")]
-    pub input: Option<String>,
+    #[structopt(name = "input", default_value = "-")]
+    pub input: Vec<String>,
+}
+
+fn eval(input: &String, debug: bool) -> Result<HtmlDoc, Box<dyn Error>> {
+    if debug {
+        eprintln!(">>> Reading {:?}", input);
+    }
+    let filedir: Option<String> = {
+        Path::new(&input)
+            .parent()
+            .map(|path| String::from(path.to_str().unwrap()))
+    };
+    if debug {
+        eprintln!(">>> filedir = {:?}", &filedir);
+    }
+    let content = io::read(&input)?;
+    let mkd = parser::markdown(&content)?;
+    if debug {
+        eprintln!(">>> markdown = {:?}", &mkd);
+    }
+    let tr = Translator::new(filedir);
+    let doc = tr.markdown(&mkd);
+    if debug {
+        eprintln!(">>> htmldoc = {:?}", &doc);
+    }
+    Ok(doc)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -35,36 +61,22 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!(">>> opt = {:?}", &opt);
     }
 
-    let filedir: Option<String> = opt
-        .input
-        .as_ref()
-        .map(|input| {
-            Path::new(&input)
-                .parent()
-                .map(|path| String::from(path.to_str().unwrap()))
-        })
-        .flatten();
-
-    let content = io::read(&opt.input)?;
-    if let Ok(markdown) = parser::markdown(content.as_str()) {
-        if opt.debug {
-            eprintln!(">>> markdown = {:?}", &markdown);
-        }
-        let tr = Translator::new(filedir);
-        let (title, htmldoc) = tr.markdown(&markdown);
-        if opt.debug {
-            eprintln!(">>> htmldoc = {:?}", &htmldoc);
-        }
-        let body = htmldoc.show(opt.compact, opt.indent);
-        let html = if opt.standalone {
-            simple(title, body)?
-        } else {
-            body
-        };
-        io::write(&opt.output, &html)?;
-    } else {
-        eprintln!("Something critical error");
+    // evaluating & flatten markdowns
+    let mut doc = eval(&opt.input[0], opt.debug)?;
+    for i in 1..opt.input.len() {
+        let mut d = eval(&opt.input[i], opt.debug)?;
+        doc.append(&mut d);
     }
+
+    // show
+    let title = doc.title.clone();
+    let body = doc.show(opt.compact, opt.indent);
+    let html = if opt.standalone {
+        simple(title, body)?
+    } else {
+        body
+    };
+    io::write(&opt.output, &html)?;
     Ok(())
 }
 
@@ -78,8 +90,9 @@ mod test_main {
         ($compact:expr, $markdown:expr, $title:expr, $body:expr) => {
             let mkd = parser::markdown($markdown).unwrap();
             let tr = Translator::new(None);
-            let (title, htmldoc) = tr.markdown(&mkd);
-            let body = htmldoc.show($compact, 2);
+            let doc = tr.markdown(&mkd);
+            let title = doc.title.to_string();
+            let body = doc.show($compact, 2);
             assert_eq!((title, body), (String::from($title), String::from($body)));
         };
         (compact; $markdown:expr, $title:expr, $body:expr) => {

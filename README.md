@@ -6,7 +6,8 @@
 $ cargo install unidoc
 
 $ cat example.md | unidoc
-$ unidoc -i example.md -o output.md
+$ unidoc example.md -o output.md
+$ unidoc input1.md input2.md input3.md -o output.md
 
 $ unidoc --help  # for more detail
 ```
