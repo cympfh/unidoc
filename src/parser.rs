@@ -14,19 +14,34 @@ use nom::sequence::{delimited, pair, preceded, terminated, tuple};
 use nom::IResult;
 
 type ParseResult<'a, T> = IResult<&'a str, T>;
-type ParseError<'a> = nom::Err<nom::error::Error<&'a str>>;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseError(String);
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+impl std::error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
 
 pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
-    let (rest, doc) = parse_markdown(input)?;
-    if !rest.is_empty() {
-        eprintln!("Parsed: {:?}", &doc);
-        eprintln!("Left: {:?}", &rest);
-        Err(nom::Err::Error(nom::error::Error::new(
-            rest,
-            nom::error::ErrorKind::Fail,
-        )))
+    if let Ok((rest, doc)) = parse_markdown(input) {
+        if !rest.is_empty() {
+            eprintln!("Parsed: {:?}", &doc);
+            eprintln!("Left: {:?}", &rest);
+            Err(ParseError(String::from(rest)))
+        } else {
+            Ok(doc)
+        }
     } else {
-        Ok(doc)
+        Err(ParseError(String::from(
+            "Something Critical Error in Parsing Markdown",
+        )))
     }
 }
 

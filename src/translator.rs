@@ -19,10 +19,9 @@ impl Translator {
     }
 
     /// Returns: (title, body)
-    pub fn markdown(&self, mkd: &Markdown) -> (String, HtmlDoc) {
+    pub fn markdown(&self, mkd: &Markdown) -> HtmlDoc {
         let title = inner_text(&mkd[0]);
-        let body = HtmlDoc::new(mkd.iter().map(|md| self.block(md)).collect());
-        (title, body)
+        HtmlDoc::new(title, mkd.iter().map(|md| self.block(md)).collect())
     }
 
     fn block(&self, block: &Block) -> Html {
@@ -49,10 +48,10 @@ impl Translator {
             Block::Table(aligns, content, has_header) => self.table(&aligns, content, *has_header),
             Block::Import(path) => {
                 if let Some(path) = find(&path, &self.filedir) {
-                    let content = io::read(&Some(path.to_string())).unwrap();
+                    let content = io::read(&path.to_string()).unwrap();
                     let mkd = parser::markdown(&content).unwrap();
-                    let (_, htmldoc) = self.markdown(&mkd);
-                    htmldoc.as_html()
+                    let doc = self.markdown(&mkd);
+                    doc.as_html()
                 } else {
                     panic!("Cannot find {}", path);
                 }
@@ -60,7 +59,7 @@ impl Translator {
             Block::HyperLink(url) => blogcard(url.to_string()),
             Block::CodeImport(language, path) => {
                 if let Some(path) = find(&path, &self.filedir) {
-                    let content = io::read(&Some(path.to_string())).unwrap();
+                    let content = io::read(&path.to_string()).unwrap();
                     let codeblock = Block::Code(language.clone(), content.to_string());
                     self.block(&codeblock)
                 } else {

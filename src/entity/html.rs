@@ -1,12 +1,13 @@
 use std::collections::VecDeque;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HtmlDoc {
+    pub title: String,
     doc: Vec<Html>,
 }
 impl HtmlDoc {
-    pub fn new(doc: Vec<Html>) -> Self {
-        Self { doc }
+    pub fn new(title: String, doc: Vec<Html>) -> Self {
+        Self { title, doc }
     }
     pub fn as_html(self) -> Html {
         Html::Node(
@@ -15,9 +16,12 @@ impl HtmlDoc {
             Box::new(Html::Leaf(String::from("</div>"))),
         )
     }
+    pub fn append(&mut self, other: &mut HtmlDoc) {
+        self.doc.append(&mut other.doc);
+    }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Html {
     Leaf(String),
     Node(Box<Html>, Vec<Html>, Box<Html>),
@@ -145,7 +149,7 @@ mod test_main {
                 node!(leaf!("<p>"), leaf!("</p>"))
             ]
         );
-        let doc = HtmlDoc::new(vec![html]);
+        let doc = HtmlDoc::new(String::new(), vec![html]);
         let expected = "<body><p></p></body>\n";
         assert_eq!(doc.show_compact(), String::from(expected));
     }
