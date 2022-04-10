@@ -14,6 +14,7 @@ pub enum Block {
     Table(Vec<Align>, Vec<Vec<Text>>, bool), // (Alignments, Content, first_is_header?)
     Import(FilePath),
     HyperLink(Url),
+    MathJax(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -72,4 +73,5 @@ pub enum Inline {
     Plaintext(String),
     Newline,
     Comment(String),
+    MathJax(String),
 }

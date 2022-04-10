@@ -114,6 +114,15 @@ Please check [this](https://prismjs.com/#basic-usage) to see language support.
 
 ## Extended Syntax
 
+### MathJax Support
+
+MathJax@3 works for
+
+```markdown
+$inline-math-tex$
+$$display-math-tex$$
+```
+
 ### Import Another Markdown
 
 ```markdown

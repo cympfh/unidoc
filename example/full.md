@@ -73,6 +73,16 @@ you must put two spaces `  `  at the end of line.
 > Quote is another paragraph.
 > Ofcource, you can use **any markdown** in quoting.
 
+## (Ex) MathJax
+
+```markdown
+$inline-math-tex$
+$$display-math-tex$$
+```
+
+When $a=2$, solve
+$$\sum_{n=1}^\infty (x-a)^n = 1.$$
+
 ## (Ex) Import Another Markdown
 
 ```markdown

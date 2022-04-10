@@ -66,6 +66,9 @@ impl Translator {
                     panic!("Cannot find {}", path);
                 }
             }
+            Block::MathJax(tex) => {
+                leaf!("\\[{}\\]", tex)
+            }
         }
     }
 
@@ -175,6 +178,7 @@ impl Translator {
             Inline::Plaintext(text) => text.to_string(),
             Inline::Newline => format!("<br />"),
             Inline::Comment(text) => format!("<!--{}-->", text),
+            Inline::MathJax(tex) => format!("\\({}\\)", tex),
         }
     }
 }
@@ -200,6 +204,7 @@ fn inner_text(block: &Block) -> String {
             Inline::HyperLink(url) => Some(url.to_string()),
             Inline::Newline => None,
             Inline::Comment(_) => None,
+            Inline::MathJax(tex) => Some(encode(tex)),
         }
     }
     match block {

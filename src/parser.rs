@@ -119,6 +119,11 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         },
     );
 
+    let parse_mathjax = map(
+        terminated(delimited(tag("$$"), parse_tex, tag("$$")), line_ending),
+        |tex| Block::MathJax(tex.to_string()),
+    );
+
     alt((
         parse_hr,
         parse_heading,
@@ -129,6 +134,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_import,
         parse_code_import,
         parse_hyperlink,
+        parse_mathjax,
         parse_paragraph,
     ))(input)
 }
@@ -236,6 +242,9 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         delimited(tag("<!--"), is_not("-->"), tag("-->")),
         |text: &str| Inline::Comment(text.to_string()),
     );
+    let parse_mathjax = map(delimited(tag("$"), parse_tex, tag("$")), |tex| {
+        Inline::MathJax(tex)
+    });
 
     many1(preceded(
         space0,
@@ -249,6 +258,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
             parse_deleted,
             parse_code,
             parse_comment,
+            parse_mathjax,
             parse_plaintext,
         )),
     ))(input)
@@ -364,6 +374,12 @@ fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List>
         let items: Vec<_> = ps.iter().map(|(_, item)| item).cloned().collect();
         List::new(listtype, items)
     })
+}
+
+/// Inner of $...$, $$...$$
+fn parse_tex(input: &str) -> ParseResult<String> {
+    let safe_one_char = preceded(not(alt((tag("$"), tag("\\$")))), take(1u8));
+    map(many1(alt((safe_one_char, tag("\\$")))), |v| v.join(""))(input)
 }
 
 #[cfg(test)]
@@ -930,6 +946,31 @@ fn main(){{}}```
         assert_parse!(
             "@[](main.rs)\n",
             vec![Block::CodeImport(None, String::from("main.rs"))]
+        );
+    }
+
+    #[test]
+    fn test_mathjax() {
+        assert_parse!(
+            "$$f(x) = x^2.$$\n",
+            vec![Block::MathJax(String::from("f(x) = x^2."))]
+        );
+        assert_parse!(
+            "$f(x) = x^2$\n",
+            vec![p! {Inline::MathJax(String::from("f(x) = x^2"))}]
+        );
+        assert_parse!(
+            "From $f(x) = x^2$.\n",
+            vec![p! {
+                text!("From"),
+                Inline::MathJax(String::from("f(x) = x^2")),
+                text!(".")
+            }]
+        );
+        assert_parse!("$$\\$$$\n", vec![Block::MathJax(String::from("\\$"))]);
+        assert_parse!(
+            "$\\mu\\$$\n",
+            vec![p! {Inline::MathJax(String::from("\\mu\\$"))}]
         );
     }
 }
