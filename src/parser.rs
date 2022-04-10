@@ -54,6 +54,9 @@ fn parse_markdown(input: &str) -> ParseResult<Markdown> {
 fn parse_block(input: &str) -> ParseResult<Block> {
     let parse_hr = map(preceded(tag("---"), line_ending), |_| Block::HorizontalRule);
 
+    let parse_pagetitle = map(preceded(pair(tag("%"), space0), parse_text_line), |text| {
+        Block::Heading(1, text)
+    });
     let parse_heading = map(
         tuple((take_while_m_n(1, 6, |c| c == '#'), space1, parse_text_line)),
         |(hashes, _, text)| Block::Heading(hashes.len(), text),
@@ -126,6 +129,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
 
     alt((
         parse_hr,
+        parse_pagetitle,
         parse_heading,
         parse_code,
         parse_listblock,
@@ -285,33 +289,35 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
     let safe_one_char = preceded(
         not(alt((
             tag(" "),
-            tag("*"),
-            tag("`"),
-            tag("~~"),
-            tag("["),
-            tag("]"),
             tag("!["),
-            tag("|"),
+            tag("$"),
+            tag("*"),
+            tag("<!--"),
+            tag("["),
             tag("\\"),
             tag("\n"),
             tag("\r"),
-            tag("<!--"),
+            tag("]"),
+            tag("`"),
+            tag("|"),
+            tag("~~"),
         ))),
         take(1u8),
     );
     let escaped_char = map(
         alt((
-            tag("\\`"),
-            tag("\\~"),
-            tag("\\<"),
-            tag("\\>"),
-            tag("\\|"),
             tag("\\ "),
             tag("\\!"),
-            tag("\\["),
-            tag("\\]"),
+            tag("\\$"),
             tag("\\*"),
+            tag("\\<"),
+            tag("\\>"),
+            tag("\\["),
             tag("\\\\"),
+            tag("\\]"),
+            tag("\\`"),
+            tag("\\|"),
+            tag("\\~"),
         )),
         |e: &str| &e[1..2],
     );

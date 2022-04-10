@@ -41,7 +41,11 @@ impl Translator {
                 } else {
                     format!("code")
                 };
-                leaf!("<pre><code class=\"{}\">{}</code></pre>", class, code)
+                leaf!(
+                    "<pre><code class=\"{}\">{}</code></pre>",
+                    class,
+                    encode(&code)
+                )
             }
             Block::HorizontalRule => leaf!("<hr />"),
             Block::ListBlock(list) => self.list(&list),
