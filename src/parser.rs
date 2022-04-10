@@ -188,14 +188,17 @@ fn parse_table(input: &str) -> ParseResult<Block> {
 /// Parse text without newline
 fn parse_text(input: &str) -> ParseResult<Text> {
     let parse_emphasis_and_strong = map(
-        map_parser(delimited(tag("***"), is_not("***"), tag("***")), parse_text),
+        map_parser(
+            delimited(tag("***"), take_until("***"), tag("***")),
+            parse_text,
+        ),
         Inline::EmphasisAndStrong,
     );
     let parse_strong = map(
         map_parser(
             alt((
-                delimited(tag("**"), is_not("**"), tag("**")),
-                delimited(tag("__"), is_not("__"), tag("__")),
+                delimited(tag("**"), take_until("**"), tag("**")),
+                delimited(tag("__"), take_until("__"), tag("__")),
             )),
             parse_text,
         ),
@@ -204,7 +207,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     let parse_emphasis = map(
         map_parser(
             alt((
-                delimited(tag("*"), is_not("*"), tag("*")),
+                delimited(tag("*"), take_until("*"), tag("*")),
                 delimited(tag("_"), is_not("_"), tag("_")),
             )),
             parse_text,
@@ -212,7 +215,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         Inline::Emphasis,
     );
     let parse_deleted = map(
-        map_parser(delimited(tag("~~"), is_not("~~"), tag("~~")), parse_text),
+        map_parser(
+            delimited(tag("~~"), take_until("~~"), tag("~~")),
+            parse_text,
+        ),
         Inline::Deleted,
     );
     let parse_code = map(delimited(tag("`"), is_not("`"), tag("`")), |text: &str| {
@@ -235,11 +241,11 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         |(text, url): (Text, &str)| Inline::Link(text, url.to_string()),
     );
     let parse_hyperlink = map(
-        delimited(tag("[["), is_not("]]"), tag("]]")),
+        delimited(tag("[["), take_until("]]"), tag("]]")),
         |url: &str| Inline::HyperLink(url.to_string()),
     );
     let parse_comment = map(
-        delimited(tag("<!--"), is_not("-->"), tag("-->")),
+        delimited(tag("<!--"), take_until("-->"), tag("-->")),
         |text: &str| Inline::Comment(text.to_string()),
     );
     let parse_mathjax = map(delimited(tag("$"), parse_tex, tag("$")), |tex| {
@@ -536,6 +542,12 @@ mod test_parser {
             }]
         );
         assert_parse!(
+            "***x~y***\n",
+            vec![p! {
+                Inline::EmphasisAndStrong(vec![text!("x~y")]),
+            }]
+        );
+        assert_parse!(
             "Hello *world* **!** \\*\\!\n\n",
             vec![p! {
                 text!("Hello"),
@@ -561,6 +573,14 @@ mod test_parser {
         assert_parse!(
             "~~Hello~~\n",
             vec![p! { Inline::Deleted(vec![text!("Hello")]) }]
+        );
+        assert_parse!(
+            "~~x~y~~\n",
+            vec![p! { Inline::Deleted(vec![text!("x~y")]) }]
+        );
+        assert_parse!(
+            "~~*z*~~\n",
+            vec![p! { Inline::Deleted(vec![Inline::Emphasis(vec![text!("z")])]) }]
         );
         assert_parse!("~Hello~\n", vec![p! { text!("~Hello~") }]);
         assert_parse!("~Hello\n", vec![p! { text!("~Hello") }]);
@@ -877,6 +897,12 @@ fn main(){{}}```
                 text!("is"),
                 comment!(" i*Love*Rust "),
                 text!("."),
+            }]
+        );
+        assert_parse!(
+            "<!-- x-y -> -->\n",
+            vec![p! {
+                comment!(" x-y -> "),
             }]
         );
     }
