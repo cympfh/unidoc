@@ -36,8 +36,10 @@ __strong__
 ### Headings
 
 ```markdown
+% h1
 # h1
 ## h2
+### h3
 ...
 ###### h6
 ```
