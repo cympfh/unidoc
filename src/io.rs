@@ -19,6 +19,13 @@ pub fn read(input: &String) -> io::Result<String> {
     Ok(content)
 }
 
+pub fn reads(inputs: &Vec<String>) -> io::Result<Vec<String>> {
+    inputs
+        .iter()
+        .map(|path| read(&path))
+        .collect::<Result<Vec<_>, _>>()
+}
+
 pub fn write(output: &Option<String>, buf: &String) -> io::Result<()> {
     if let Some(output) = &output {
         let mut file = File::create(&output)?;

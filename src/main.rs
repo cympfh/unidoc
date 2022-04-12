@@ -12,7 +12,6 @@ use std::path::Path;
 use structopt::StructOpt;
 
 use crate::entity::html::HtmlDoc;
-use crate::template::simple;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -26,6 +25,14 @@ struct Opt {
     pub compact: bool,
     #[structopt(long = "indent", default_value = "2")]
     pub indent: usize,
+    #[structopt(short = "H", long = "include-in-header")]
+    pub include_in_header: Vec<String>,
+    #[structopt(short = "B", long = "include-before-body")]
+    pub include_before_body: Vec<String>,
+    #[structopt(short = "A", long = "include-after-body")]
+    pub include_after_body: Vec<String>,
+    #[structopt(short = "C", long = "css")]
+    pub css: Vec<String>,
     #[structopt(name = "input", default_value = "-")]
     pub input: Vec<String>,
 }
@@ -69,10 +76,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     // show
-    let title = doc.title.clone();
     let body = doc.show(opt.compact, opt.indent);
     let html = if opt.standalone {
-        simple(title, body)?
+        let headers = io::reads(&opt.include_in_header)?;
+        let befores = io::reads(&opt.include_before_body)?;
+        let afters = io::reads(&opt.include_after_body)?;
+        let ctx = template::Context::new(doc.title, body, opt.css, headers, befores, afters);
+        template::simple(ctx)?
     } else {
         body
     };
