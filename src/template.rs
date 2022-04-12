@@ -47,12 +47,12 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
   {{/each}}
-  {{#each headers}}{{{this}}}{{/each}}
+{{#each headers}}{{{this}}}{{/each}}
 </head>
 <body>
-  {{#each befores}}{{{this}}}{{/each}}
+{{#each befores}}{{{this}}}{{/each}}
 {{{body}}}
-  {{#each afters}}{{{this}}}{{/each}}
+{{#each afters}}{{{this}}}{{/each}}
   <script src="https://cympfh.cc/resources/js/youtube.js"></script>
   <script src="https://unpkg.com/prismjs@v1.x/components/prism-core.min.js"></script>
   <script src="https://unpkg.com/prismjs@v1.x/plugins/autoloader/prism-autoloader.min.js"></script>
