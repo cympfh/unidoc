@@ -148,3 +148,33 @@ Hyperlink as a block generates Blogcard:
 
 {{ https://cympfh.cc/ }}
 ```
+
+## Template
+
+`unidoc` uses Handlebars for rendering.
+`--template` can specify your customized template file (.hbs) and `-V` passes free variables.
+
+### Variable (`crate::template::Context`)
+
+- title
+    - PageTtitle
+- body
+    - body HTML
+- headers
+    - Vec of files
+    - `--include-in-header`, `-H`
+- befores
+    - Vec of files
+    - `--include-before-body`, `-B`
+- afters
+    - Vec of files
+    - `--include-after-body`, `-A`
+- css
+    - Vec of files
+    - `--css`, `-C`
+- variables
+    - `HashMap<String, String>`
+    - `--variable`, `-V`
+        - `-V KEY:VALUE` in CLI
+        - `{{variable.KEY}}` in Handlebars
+

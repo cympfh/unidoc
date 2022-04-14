@@ -1,5 +1,6 @@
 use handlebars::{Handlebars, RenderError};
 use serde::Serialize;
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 pub struct Context {
@@ -9,6 +10,7 @@ pub struct Context {
     headers: Vec<String>,
     befores: Vec<String>,
     afters: Vec<String>,
+    variable: HashMap<String, String>,
 }
 
 impl Context {
@@ -19,6 +21,7 @@ impl Context {
         headers: Vec<String>,
         befores: Vec<String>,
         afters: Vec<String>,
+        variable: HashMap<String, String>,
     ) -> Self {
         Self {
             title,
@@ -27,6 +30,7 @@ impl Context {
             headers,
             befores,
             afters,
+            variable,
         }
     }
 }
@@ -60,4 +64,9 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
 </html>"#;
     let reg = Handlebars::new();
     reg.render_template(TEMPLATE, &context)
+}
+
+pub fn custom(htmltemplate: &str, context: Context) -> Result<String, RenderError> {
+    let reg = Handlebars::new();
+    reg.render_template(htmltemplate, &context)
 }
