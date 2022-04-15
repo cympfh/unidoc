@@ -6,7 +6,9 @@ pub mod template;
 pub mod translator;
 pub mod webpage;
 
+use crate::template::Context;
 use crate::translator::Translator;
+use std::collections::HashMap;
 use std::error::Error;
 use std::path::Path;
 use structopt::StructOpt;
@@ -17,7 +19,7 @@ use crate::entity::html::HtmlDoc;
 struct Opt {
     #[structopt(long = "debug")]
     pub debug: bool,
-    #[structopt(long = "out", short = "o")]
+    #[structopt(long = "output", short = "o")]
     pub output: Option<String>,
     #[structopt(long = "standalone", short = "s")]
     pub standalone: bool,
@@ -33,6 +35,10 @@ struct Opt {
     pub include_after_body: Vec<String>,
     #[structopt(short = "C", long = "css")]
     pub css: Vec<String>,
+    #[structopt(short = "T", long = "template", help = "Handlebars template file path")]
+    pub template: Option<String>,
+    #[structopt(short = "V", long = "variable", help = "-V KEY:VALUE")]
+    pub variable: Vec<String>,
     #[structopt(name = "input", default_value = "-")]
     pub input: Vec<String>,
 }
@@ -62,6 +68,35 @@ fn eval(input: &String, debug: bool) -> Result<HtmlDoc, Box<dyn Error>> {
     Ok(doc)
 }
 
+fn context(title: String, body: String, opt: &Opt) -> Result<Context, Box<dyn Error>> {
+    let headers = io::reads(&opt.include_in_header)?;
+    let befores = io::reads(&opt.include_before_body)?;
+    let afters = io::reads(&opt.include_after_body)?;
+
+    fn split(s: &String) -> (String, String) {
+        if let Some(i) = s.find(':') {
+            (s[0..i].to_string(), s[i + 1..].to_string())
+        } else {
+            (s.to_string(), s.to_string())
+        }
+    }
+    let variable: HashMap<String, String> = opt.variable.iter().map(|s| split(s)).collect();
+    if opt.debug {
+        eprintln!(">>> variable = {:?}", &variable);
+    }
+
+    let ctx = template::Context::new(
+        title,
+        body,
+        opt.css.clone(),
+        headers,
+        befores,
+        afters,
+        variable,
+    );
+    Ok(ctx)
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
@@ -77,12 +112,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // show
     let body = doc.show(opt.compact, opt.indent);
-    let html = if opt.standalone {
-        let headers = io::reads(&opt.include_in_header)?;
-        let befores = io::reads(&opt.include_before_body)?;
-        let afters = io::reads(&opt.include_after_body)?;
-        let ctx = template::Context::new(doc.title, body, opt.css, headers, befores, afters);
-        template::simple(ctx)?
+    let html = if opt.standalone && opt.template.is_some() {
+        let ctx = context(doc.title, body, &opt)?;
+        if let Some(template_file_path) = opt.template {
+            let htmltemplate = io::read(&template_file_path)?;
+            template::custom(&htmltemplate, ctx)?
+        } else {
+            template::simple(ctx)?
+        }
     } else {
         body
     };
