@@ -1,5 +1,11 @@
 # unidoc: Unite all Markdown.
 
+<p>
+    <a href="https://crates.io/crates/unidoc"><img src="https://img.shields.io/crates/v/unidoc.svg?style=flat-square" alt="crates.io" /></a>
+    <a href="https://actions-badge.atrox.dev/cympfh/unidoc/goto?ref=main"><img alt="Build Status" src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fcympfh%2Funidoc%2Fbadge%3Fref%3Dmain&style=flat-square" /></a>
+    <a href="https://github.com/cympfh/unidoc/blob/main/LICENSE"><img src="https://img.shields.io/crates/l/unidoc.svg?style=flat-square" /></a>
+</p>
+
 ## Install & Usage
 
 ```sh
