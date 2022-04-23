@@ -26,6 +26,9 @@ impl Translator {
 
     fn block(&self, block: &Block) -> Html {
         match block {
+            Block::Heading(1, label) => {
+                leaf!("<h1 class=\"title\">{}</h1>", self.text(&label))
+            }
             Block::Heading(level, label) => {
                 leaf!("<h{}>{}</h{}>", level, self.text(&label), level)
             }

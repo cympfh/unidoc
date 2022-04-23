@@ -37,11 +37,12 @@ impl Context {
 
 pub fn simple(context: Context) -> Result<String, RenderError> {
     const TEMPLATE: &str = r#"<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Style-Type" content="text/css" />
   <meta name="generator" content="unidoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>{{{title}}}</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />

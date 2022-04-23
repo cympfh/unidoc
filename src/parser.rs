@@ -270,6 +270,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
             parse_comment,
             parse_mathjax,
             parse_plaintext,
+            parse_plaintext_failover,
         )),
     ))(input)
 }
@@ -324,6 +325,13 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
     map(many1(alt((safe_one_char, escaped_char))), |v| {
         Inline::Plaintext(v.join(""))
     })(input)
+}
+
+fn parse_plaintext_failover(input: &str) -> ParseResult<Inline> {
+    let mut tagged = map(delimited(tag("["), is_not("]"), tag("]")), |inner: &str| {
+        Inline::Plaintext(format!("[{}]", inner))
+    });
+    tagged(input)
 }
 
 fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List> {
@@ -1003,6 +1011,17 @@ fn main(){{}}```
         assert_parse!(
             "$\\mu\\$$\n",
             vec![p! {Inline::MathJax(String::from("\\mu\\$"))}]
+        );
+    }
+
+    #[test]
+    fn test_plaintext_failover() {
+        assert_parse!(
+            "unidoc [v1.0.0]\n",
+            vec![p! {
+                text!("unidoc"),
+                text!("[v1.0.0]"),
+            }]
         );
     }
 }
