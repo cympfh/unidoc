@@ -49,10 +49,10 @@ impl BlogContext {
 fn blogcard_general(url: String) -> Html {
     let webpage = WebPage::new(url.to_string());
     let title: String = webpage
-        .ogtitle()
+        .meta("og:title")
         .unwrap_or_else(|| webpage.title().unwrap_or(url.to_string()));
-    let image = webpage.ogimage().unwrap_or(String::new());
-    let description = webpage.ogdescription().unwrap_or(String::new());
+    let image = webpage.meta("og:image").unwrap_or(String::new());
+    let description = webpage.meta("og:description").unwrap_or(String::new());
     const TEMPLATE: &str = r#"
 <div class="blogcard" style="width:auto;max-width:9999px;border:1px solid #E0E0E0;border-radius:3px;margin:10px 0;padding:15px;line-height:1.4;text-align:left;background:#FFFFFF;">
 <a href="{{url}}" target="_blank" style="display:block;text-decoration:none;">
