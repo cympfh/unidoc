@@ -10,6 +10,8 @@ pub fn blogcard(url: String) -> Html {
     lazy_static! {
         static ref YOUTUBE: Regex = Regex::new(r"youtube.com/watch\?v=([^&]+)$").unwrap();
         static ref TWITTER: Regex = Regex::new(r"twitter.com/.*/status/([0-9])+").unwrap();
+        static ref SOUNDCLOUD: Regex =
+            Regex::new(r"https://soundcloud.com/([^/]*)/([a-zA-Z0-9\-_]*)").unwrap();
     }
     if let Some(caps) = YOUTUBE.captures(&url) {
         let id = caps.get(1).unwrap().as_str();
@@ -19,6 +21,9 @@ pub fn blogcard(url: String) -> Html {
                             <a href=\"{}\"></a></blockquote>
                             <script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>",
                             url)
+    } else if let Some(caps) = SOUNDCLOUD.captures(&url) {
+        let user_id = caps.get(1).unwrap().as_str().to_string();
+        blogcard_soundcloud(url, user_id)
     } else {
         blogcard_general(url)
     }
@@ -66,6 +71,43 @@ fn blogcard_general(url: String) -> Html {
     "#;
     let reg = Handlebars::new();
     let context = BlogContext::new(url, title, description, image);
+    let html = reg.render_template(TEMPLATE, &context).unwrap();
+    Html::Leaf(html)
+}
+
+#[derive(Serialize)]
+struct SoundCloudContext {
+    url: String,
+    title: String,
+    user_id: String,
+    sound_id: String,
+}
+
+fn blogcard_soundcloud(url: String, user_id: String) -> Html {
+    let webpage = WebPage::new(url.to_string());
+    let title = webpage.meta("og:title").unwrap_or(url.to_string());
+    lazy_static! {
+        static ref INTENT: Regex = Regex::new(r"soundcloud://sounds:([0-9]*)").unwrap();
+    }
+    let sound_id = webpage
+        .meta("al:ios:url")
+        .map(|link| {
+            INTENT
+                .captures(&link)
+                .map(|caps| caps.get(1).unwrap().as_str().to_string())
+        })
+        .flatten()
+        .unwrap();
+    const TEMPLATE: &str = r#"
+<iframe width="100%" height="300" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/{{sound_id}}&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"></iframe><div style="font-size: 10px; color: #cccccc;line-break: anywhere;word-break: normal;overflow: hidden;white-space: nowrap;text-overflow: ellipsis; font-family: Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif;font-weight: 100;"><a href="https://soundcloud.com/{{user_id}}" title="{{user_id}}" target="_blank" style="color: #cccccc; text-decoration: none;">{{user_id}}</a> · <a href="{{url}}" title="{{title}}" target="_blank" style="color: #cccccc; text-decoration: none;">{{title}}</a></div>
+    "#;
+    let reg = Handlebars::new();
+    let context = SoundCloudContext {
+        url,
+        title,
+        user_id,
+        sound_id,
+    };
     let html = reg.render_template(TEMPLATE, &context).unwrap();
     Html::Leaf(html)
 }
