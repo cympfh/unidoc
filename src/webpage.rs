@@ -27,35 +27,13 @@ impl WebPage {
             None
         }
     }
-    pub fn ogtitle(&self) -> Option<String> {
+    pub fn meta(&self, property: &str) -> Option<String> {
         if let Some(content) = self.content.as_ref() {
-            let p = Pattern::new("<meta property=og:title content={{content}} />").unwrap();
-            let ms = p.matches(&content);
-            if ms.is_empty() {
-                None
-            } else {
-                ms[0].get("content").cloned()
-            }
-        } else {
-            None
-        }
-    }
-    pub fn ogdescription(&self) -> Option<String> {
-        if let Some(content) = self.content.as_ref() {
-            let p = Pattern::new("<meta property=og:description content={{content}} />").unwrap();
-            let ms = p.matches(&content);
-            if ms.is_empty() {
-                None
-            } else {
-                ms[0].get("content").cloned()
-            }
-        } else {
-            None
-        }
-    }
-    pub fn ogimage(&self) -> Option<String> {
-        if let Some(content) = self.content.as_ref() {
-            let p = Pattern::new("<meta property=og:image content={{content}} />").unwrap();
+            let p = Pattern::new(&format!(
+                "<meta property={} content={{{{content}}}} />",
+                property
+            ))
+            .unwrap();
             let ms = p.matches(&content);
             if ms.is_empty() {
                 None
