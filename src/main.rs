@@ -112,15 +112,24 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // show
     let body = doc.show(opt.compact, opt.indent);
-    let html = if opt.standalone && opt.template.is_some() {
+    let html = if opt.standalone || opt.template.is_some() {
         let ctx = context(doc.title, body, &opt)?;
         if let Some(template_file_path) = opt.template {
+            if opt.debug {
+                eprintln!("Standalone with custom template: {:?}", template_file_path);
+            }
             let htmltemplate = io::read(&template_file_path)?;
             template::custom(&htmltemplate, ctx)?
         } else {
+            if opt.debug {
+                eprintln!("Standalone with simple template");
+            }
             template::simple(ctx)?
         }
     } else {
+        if opt.debug {
+            eprintln!("Fragment Mode");
+        }
         body
     };
     io::write(&opt.output, &html)?;
