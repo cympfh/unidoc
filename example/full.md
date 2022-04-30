@@ -1,41 +1,82 @@
-# Fully Example Document - [[https://github.com/cympfh/unidoc]]
+# :book: Full Example for [unidoc](https://github.com/cympfh/unidoc) :magnet:
 
-## Styled text
+## Styled Text
 
-Emphasis *this* or _this_ is italic.
-Strong **this** or __this__ is bold.
-Using `***`, ***both***.
+```markdown
+*emphasis* == _italic_
+**strong** == __bold__
+***emphasis & strong***
+```
 
-[Link](//cympfh.cc) and ![image](https://cympfh.cc/favicon.ico).
-Link can have image as text: [![](https://cympfh.cc/favicon.ico)](//cympfh.cc)
+Single `*` or `_` quotings are *emphasis* (or _italic_).
+Double `**` or `__` quotings are **strong** (or __bold__).
+Triple `***` can make ***Emphasis and Strong***.
 
+```markdown
 ~~This is deleted.~~
+```
+
+Double `~~` quotings are ~~deleted~~ (or striked).
+
+## Links, Images
+
+```markdown
+[link text](url)
+![image alt](image url or path)
+
+The `link text` can be an image.
+[![alt](https://cympfh.cc/favicon.ico)](//cympfh.cc)
+```
+
+[![alt](https://cympfh.cc/favicon.ico)](//cympfh.cc)
 
 ## List, Task List
 
-1. list
-1. tasks:
-    - [ ] TODO
-    - [x] DONE
+```markdown
+- Unordered lists
+- ...
+  + The bullets can be one of `-` `+` `*`
+  + ...
 
-### Deep Nested List
+1. Ordered lists
+1. The bullets can be one of `1.` `a.`
+```
 
-- ul
-    + child
-        * mago
-            1. ol
-                - a. alphabet
+TODO checkboxes can be put.
+
+```markdown
+- Tasks:
+  - [ ] TODO
+  - [x] DONE
+```
+
+- Tasks:
+  - [ ] TODO
+  - [x] DONE
 
 ## Table
 
-`mindoc` adopts common (or GitHub) style Table Notation.
+Github-style Table Notation can use.
+
+```markdown
+| A | B | Left | Center | Right |
+|---| - |:-----|:---:| --: |
+| a | b | left | c   | r   |
+| 1 | 2 | 3    | 4   | 5   |
+```
 
 | A | B | Left | Center | Right |
 |---| - |:-----|:---:| --: |
-| a | b | left | c | r |
-|1|2|3|4|5|
+| a | b | left | c   | r   |
+| 1 | 2 | 3    | 4   | 5   |
 
-Tables without headers
+Headers can be omitted.
+
+```markdown
+| A | B | C |
+| a | b | c |
+| 1 | 2 | 3 |
+```
 
 | A | B | C |
 | a | b | c |
@@ -43,24 +84,31 @@ Tables without headers
 
 ## Codes
 
-Inline code is `like this`.
-Code block are expressed with \`\`\`.
+```markdown
+`inline code` ```
+
+`unidoc` is written in `Rust`.
+
+(Fenced) Code block are quoted with \`\`\`.
 
 ```
 def main():
     pass
 ```
 
-This is python code. You can express the language name:
+This is a python code.
+You can express the language name:
 
 ```python
 def main():
     pass
 ```
 
-This block is styled with [Prism.js](https://prismjs.com/#basic-usage).
+When `--standalone, -s`, the code blocks (with language names) are styled with [Prism.js](https://prismjs.com/#basic-usage).
+Also see [Supported languages](https://prismjs.com/#supported-languages)
+as available language names.
 
-## Paragraph.
+## Paragraph
 
 Almost plaintexts are interpreted as paragraph.
 Paragraphs are separated with one or more empty lines.
@@ -72,6 +120,8 @@ you must put two spaces `  `  at the end of line.
 
 > Quote is another paragraph.
 > Ofcource, you can use **any markdown** in quoting.
+
+---
 
 ## (Ex) MathJax
 
@@ -86,7 +136,7 @@ $$\sum_{n=1}^\infty (x-a)^n = 1.$$
 ## (Ex) Import Another Markdown
 
 ```markdown
-@(list.md)
+@(another markdown file path)
 ```
 
 @(list.md)
@@ -94,23 +144,51 @@ $$\sum_{n=1}^\infty (x-a)^n = 1.$$
 ## (Ex) Import Another as a Code block
 
 ```markdown
+@[language name](file path)
 @[rust](sample.rs)
 ```
 
 @[rust](sample.rs)
 
-## (Ex) Inner HyperLink
+## (Ex) Inline HyperLink
+
+```markdown
+[[url]]
+```
 
 `[[url]]` makes a nicely link: [[http://example.com]].
-The text for link is the `<title>` of the web page.
+The text for link is the `<title>` of the web page (web is required).
 
 If something error while fetching web page, url will be used alternatively.
-[[http://this.is.not.existing-site.co.com.tokyo.jp]]
+(:point_right: [[http://this.is.not.existing-site.co.com.tokyo.jp]])
 
 ## (Ex) Block HyperLink a.k.a BlogCard
 
-{{ https://cympfh.cc/taglibro/2022/03/31 }}
+```markdown
+{{url}}
+```
+
+This generates nicely blogcard.
+OGP metadata are used (web is required).
+Some urls have special forms for embedding (e.g. Youtube, Twitter).
+
+**NOTE**:
+This is a paragraph block.
+Each paragraphs must be delimited with empty lines in markdown text.
+
+{{https://example.com}}
 
 {{https://www.youtube.com/watch?v=_FKRL-t8aM8}}
 
 {{https://twitter.com/Jack/status/20}}
+
+## :joy: Emojis
+
+```markdown
+:(emoji-shortcode):
+
+:+1: :joy: :cry:
+```
+
+Github emoji shortcodes are available :v:
+Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md) :point_left:

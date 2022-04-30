@@ -1,4 +1,4 @@
-# unidoc: Unite all Markdown.
+# :magnet: unidoc: Unite all Markdown.
 
 <p>
     <a href="https://crates.io/crates/unidoc"><img src="https://img.shields.io/crates/v/unidoc.svg?style=flat-square" alt="crates.io" /></a>
@@ -193,4 +193,3 @@ Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/
     - `--variable`, `-V`
         - `-V KEY:VALUE` in CLI
         - `{{variable.KEY}}` in Handlebars
-
