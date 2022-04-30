@@ -230,12 +230,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     });
     let parse_image = map(
         pair(
-            delimited(tag("!["), opt(is_not("]")), tag("]")),
+            delimited(tag("!["), take_until("]"), tag("]")),
             delimited(tag("("), is_not(")"), tag(")")),
         ),
-        |(alt, link): (Option<&str>, &str)| {
-            Inline::Image(alt.unwrap_or(&"").to_string(), link.to_string())
-        },
+        |(alt, link): (&str, &str)| Inline::Image(alt.to_string(), link.to_string()),
     );
     let parse_link = map(
         pair(
@@ -327,11 +325,17 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
     })(input)
 }
 
+/// partially special syntax are considered as plaintexts
 fn parse_plaintext_failover(input: &str) -> ParseResult<Inline> {
-    let mut tagged = map(delimited(tag("["), is_not("]"), tag("]")), |inner: &str| {
-        Inline::Plaintext(format!("[{}]", inner))
-    });
-    tagged(input)
+    let tagged = map(
+        delimited(tag("["), take_until("]"), tag("]")),
+        |inner: &str| Inline::Plaintext(format!("[{}]", inner)),
+    );
+    let bang_tagged = map(
+        delimited(tag("!["), take_until("]"), tag("]")),
+        |inner: &str| Inline::Plaintext(format!("![{}]", inner)),
+    );
+    alt((tagged, bang_tagged))(input)
 }
 
 fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List> {
@@ -1021,6 +1025,15 @@ fn main(){{}}```
             vec![p! {
                 text!("unidoc"),
                 text!("[v1.0.0]"),
+            }]
+        );
+        assert_parse!("[x] (y)\n", vec![p! { text!("[x]"), text!("(y)"), }]);
+        assert_parse!(
+            "[] ![] ![x]\n",
+            vec![p! {
+                text!("[]"),
+                text!("![]"),
+                text!("![x]"),
             }]
         );
     }
