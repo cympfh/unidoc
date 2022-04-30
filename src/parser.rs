@@ -254,7 +254,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         Inline::MathJax(tex)
     });
     let parse_emoji = map(
-        delimited(tag(":"), is_not(": "), tag(":")),
+        delimited(tag(":"), is_not(": \t\r\n"), tag(":")),
         |shortcode: &str| Inline::Emoji(shortcode.to_string()),
     );
 
@@ -1058,6 +1058,14 @@ fn main(){{}}```
                 emoji!("+1"),
                 emoji!("x"),
                 emoji!("emoji"),
+                text!(":"),
+            }]
+        );
+        assert_parse!(
+            ":h :+1\n:\n",
+            vec![p! {
+                text!(":h"),
+                text!(":+1"),
                 text!(":"),
             }]
         );
