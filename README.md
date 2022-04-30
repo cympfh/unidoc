@@ -155,7 +155,7 @@ Hyperlink as a block generates Blogcard:
 {{ https://cympfh.cc/ }}
 ```
 
-## Emojis
+## :joy: Emojis
 
 ```markdown
 :(emoji-shortcode):
