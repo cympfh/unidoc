@@ -155,6 +155,16 @@ Hyperlink as a block generates Blogcard:
 {{ https://cympfh.cc/ }}
 ```
 
+## :joy: Emojis
+
+```markdown
+:(emoji-shortcode):
+:joy: :cry: :+1:
+```
+
+Github style shortcodes are available.
+Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md).
+
 ## Template
 
 `unidoc` uses Handlebars for rendering.

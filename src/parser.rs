@@ -253,6 +253,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     let parse_mathjax = map(delimited(tag("$"), parse_tex, tag("$")), |tex| {
         Inline::MathJax(tex)
     });
+    let parse_emoji = map(
+        delimited(tag(":"), is_not(": \t\r\n"), tag(":")),
+        |shortcode: &str| Inline::Emoji(shortcode.to_string()),
+    );
 
     many1(preceded(
         space0,
@@ -267,6 +271,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
             parse_code,
             parse_comment,
             parse_mathjax,
+            parse_emoji,
             parse_plaintext,
             parse_plaintext_failover,
         )),
@@ -309,6 +314,7 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
             tag("\\!"),
             tag("\\$"),
             tag("\\*"),
+            tag("\\:"),
             tag("\\<"),
             tag("\\>"),
             tag("\\["),
@@ -429,6 +435,11 @@ mod test_parser {
     macro_rules! text {
         ($str:expr) => {
             (Inline::Plaintext(String::from($str)))
+        };
+    }
+    macro_rules! emoji {
+        ($str:expr) => {
+            (Inline::Emoji(String::from($str)))
         };
     }
     macro_rules! comment {
@@ -1034,6 +1045,28 @@ fn main(){{}}```
                 text!("[]"),
                 text!("![]"),
                 text!("![x]"),
+            }]
+        );
+    }
+
+    #[test]
+    fn test_emoji() {
+        assert_parse!(
+            "emojis: :+1: :x: :emoji: :\n",
+            vec![p! {
+                text!("emojis:"),
+                emoji!("+1"),
+                emoji!("x"),
+                emoji!("emoji"),
+                text!(":"),
+            }]
+        );
+        assert_parse!(
+            ":h :+1\n:\n",
+            vec![p! {
+                text!(":h"),
+                text!(":+1"),
+                text!(":"),
             }]
         );
     }

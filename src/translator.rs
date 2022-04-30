@@ -186,6 +186,14 @@ impl Translator {
             Inline::Newline => format!("<br />"),
             Inline::Comment(text) => format!("<!--{}-->", text),
             Inline::MathJax(tex) => format!("\\({}\\)", tex),
+            Inline::Emoji(shortcode) => {
+                if let Some(emoji) = emojis::get_by_shortcode(&shortcode) {
+                    emoji.to_string()
+                } else {
+                    // fail-over
+                    format!(":{}:", shortcode)
+                }
+            }
         }
     }
 }
@@ -212,6 +220,7 @@ fn inner_text(block: &Block) -> String {
             Inline::Newline => None,
             Inline::Comment(_) => None,
             Inline::MathJax(tex) => Some(encode(tex)),
+            Inline::Emoji(shortcode) => Some(shortcode.to_string()),
         }
     }
     match block {
