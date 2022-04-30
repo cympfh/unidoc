@@ -201,4 +201,9 @@ mod test_main {
             "<h1 class=\"title\">test</h1><div class=\"youtube\" src-id=\"_FKRL-t8aM8\"></div>\n"
         );
     }
+
+    #[test]
+    fn test_emoji() {
+        assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\">\u{1f602}</h1>\n");
+    }
 }

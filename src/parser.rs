@@ -437,6 +437,11 @@ mod test_parser {
             (Inline::Plaintext(String::from($str)))
         };
     }
+    macro_rules! emoji {
+        ($str:expr) => {
+            (Inline::Emoji(String::from($str)))
+        };
+    }
     macro_rules! comment {
         ($str:expr) => {
             (Inline::Comment(String::from($str)))
@@ -1040,6 +1045,20 @@ fn main(){{}}```
                 text!("[]"),
                 text!("![]"),
                 text!("![x]"),
+            }]
+        );
+    }
+
+    #[test]
+    fn test_emoji() {
+        assert_parse!(
+            "emojis: :+1: :x: :emoji: :\n",
+            vec![p! {
+                text!("emojis:"),
+                emoji!("+1"),
+                emoji!("x"),
+                emoji!("emoji"),
+                text!(":"),
             }]
         );
     }
