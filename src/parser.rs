@@ -253,6 +253,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     let parse_mathjax = map(delimited(tag("$"), parse_tex, tag("$")), |tex| {
         Inline::MathJax(tex)
     });
+    let parse_emoji = map(
+        delimited(tag(":"), is_not(": "), tag(":")),
+        |shortcode: &str| Inline::Emoji(shortcode.to_string()),
+    );
 
     many1(preceded(
         space0,
@@ -267,6 +271,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
             parse_code,
             parse_comment,
             parse_mathjax,
+            parse_emoji,
             parse_plaintext,
             parse_plaintext_failover,
         )),
@@ -309,6 +314,7 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
             tag("\\!"),
             tag("\\$"),
             tag("\\*"),
+            tag("\\:"),
             tag("\\<"),
             tag("\\>"),
             tag("\\["),
