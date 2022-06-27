@@ -169,6 +169,14 @@ mod test_main {
             "",
             "<ul><li>a</li><li>b</li><li>c</li></ul>\n"
         );
+        assert_convert!(compact; "[[http://example.com/]]\n",
+            "http://example.com/",
+            "<p><a href=\"http://example.com/\">Example Domain</a></p>\n"
+        );
+    }
+
+    #[test]
+    fn test_table() {
         assert_convert!(compact; "| A |\n|:-:|\n| a |\n",
             "",
             "<table><thead><tr class=header><th align=center>A</th></tr></thead><tbody><tr class=odd><td align=center>a</td></tr></tbody></table>\n"
@@ -177,9 +185,9 @@ mod test_main {
             "",
             "<table><tbody><tr class=odd><td align=left>A</td></tr><tr class=even><td align=left>a</td></tr></tbody></table>\n"
         );
-        assert_convert!(compact; "[[http://example.com/]]\n",
-            "http://example.com/",
-            "<p><a href=\"http://example.com/\">Example Domain</a></p>\n"
+        assert_convert!(compact; "|  |\n|  |\n",
+            "",
+            "<table><tbody><tr class=odd><td align=left></td></tr><tr class=even><td align=left></td></tr></tbody></table>\n"
         );
     }
 

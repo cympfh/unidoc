@@ -146,7 +146,13 @@ fn parse_block(input: &str) -> ParseResult<Block> {
 fn parse_table(input: &str) -> ParseResult<Block> {
     /// | VALUE | VALUE | ... | VALUE | NEWLINE
     fn parse_row(input: &str) -> ParseResult<Vec<Text>> {
-        let parse_a_value = terminated(delimited(space0, parse_text, space0), tag("|"));
+        let parse_a_value = terminated(
+            alt((
+                delimited(space0, parse_text, space0),
+                map(space0, |_| vec![]),
+            )),
+            tag("|"),
+        );
         delimited(tag("|"), many1(parse_a_value), line_ending)(input)
     }
 
@@ -899,6 +905,21 @@ fn main(){{}}```
                         vec![text!("4")],
                         vec![text!("5")],
                     ],
+                ],
+                true,
+            )]
+        );
+        assert_parse!(
+            r#"
+| A |   |
+| - | - |
+|1| |
+"#,
+            vec![Block::Table(
+                vec![Align::Left, Align::Left],
+                vec![
+                    vec![vec![text!("A")], vec![]],
+                    vec![vec![text!("1")], vec![]],
                 ],
                 true,
             )]
