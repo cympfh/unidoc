@@ -36,7 +36,7 @@ impl Translator {
                 leaf!("<p>{}</p>", self.text(&text))
             }
             Block::Quoted(text) => {
-                leaf!("<q>{}</q>", self.text(&text))
+                leaf!("<blockquote>{}</blockquote>", self.text(&text))
             }
             Block::Code(language, code) => {
                 let class = if let Some(lang) = language {
