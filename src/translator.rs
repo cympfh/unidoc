@@ -74,7 +74,7 @@ impl Translator {
                 }
             }
             Block::MathJax(tex) => {
-                leaf!("\\[{}\\]", tex)
+                leaf!("\\[{}\\]", encode(tex))
             }
         }
     }
@@ -185,7 +185,7 @@ impl Translator {
             Inline::Plaintext(text) => text.to_string(),
             Inline::Newline => format!("<br />"),
             Inline::Comment(text) => format!("<!--{}-->", text),
-            Inline::MathJax(tex) => format!("\\({}\\)", tex),
+            Inline::MathJax(tex) => format!("\\({}\\)", encode(tex)),
             Inline::Emoji(shortcode) => {
                 if let Some(emoji) = emojis::get_by_shortcode(&shortcode) {
                     emoji.to_string()
@@ -249,4 +249,18 @@ fn find(path: &String, filedir: &Option<String>) -> Option<String> {
 
 fn encode(html: &String) -> String {
     html_escape::encode_safe(html).to_string()
+}
+
+#[cfg(test)]
+mod test_parser {
+
+    use crate::translator::*;
+
+    #[test]
+    fn test_encode() {
+        assert_eq!(
+            encode(&"f(x) < g(x) > 1".to_string()),
+            "f(x) &lt; g(x) &gt; 1".to_string()
+        );
+    }
 }
