@@ -194,6 +194,7 @@ mod test_main {
     #[test]
     fn test_safe_encode() {
         assert_convert!(compact; "`<code>`\n", "&lt;code&gt;", "<p><code>&lt;code&gt;</code></p>\n");
+        assert_convert!(compact; "# test\n\n$f(x) > 1$\n", "test", "<h1 class=\"title\">test</h1><p>\\(f(x) &gt; 1\\)</p>\n");
     }
 
     #[test]
