@@ -1,6 +1,8 @@
 use easy_scraper::Pattern;
 use reqwest;
 
+static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
+
 pub struct WebPage {
     _url: String,
     content: Option<String>,
@@ -8,7 +10,14 @@ pub struct WebPage {
 
 impl WebPage {
     pub fn new(url: String) -> Self {
-        let content: Option<String> = reqwest::blocking::get(&url)
+        eprintln!("Fetching {}...", url);
+        let content: Option<String> = reqwest::blocking::Client::builder()
+            .user_agent(APP_USER_AGENT)
+            .build()
+            .ok()
+            .unwrap()
+            .get(&url)
+            .send()
             .ok()
             .map(|response| response.text().ok())
             .flatten();
@@ -29,19 +38,19 @@ impl WebPage {
     }
     pub fn meta(&self, property: &str) -> Option<String> {
         if let Some(content) = self.content.as_ref() {
-            let p = Pattern::new(&format!(
-                "<meta property={} content={{{{content}}}} />",
-                property
-            ))
-            .unwrap();
-            let ms = p.matches(&content);
-            if ms.is_empty() {
-                None
-            } else {
-                ms[0].get("content").cloned()
+            let attributes = vec!["property", "name"];
+            for attr in attributes.iter() {
+                let p = Pattern::new(&format!(
+                    "<meta {}={} content={{{{content}}}} />",
+                    attr, property
+                ))
+                .unwrap();
+                let ms = p.matches(&content);
+                if !ms.is_empty() {
+                    return ms[0].get("content").cloned();
+                }
             }
-        } else {
-            None
         }
+        None
     }
 }
