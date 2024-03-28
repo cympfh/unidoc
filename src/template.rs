@@ -7,6 +7,7 @@ pub struct Context {
     title: String,
     body: String,
     css: Vec<String>,
+    js: Vec<String>,
     headers: Vec<String>,
     befores: Vec<String>,
     afters: Vec<String>,
@@ -18,6 +19,7 @@ impl Context {
         title: String,
         body: String,
         css: Vec<String>,
+        js: Vec<String>,
         headers: Vec<String>,
         befores: Vec<String>,
         afters: Vec<String>,
@@ -27,6 +29,7 @@ impl Context {
             title,
             body,
             css,
+            js,
             headers,
             befores,
             afters,
@@ -51,6 +54,9 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
   <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/tex-svg-full.js"></script>
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
+  {{/each}}
+  {{#each js}}
+  <script src="{{this}}"></script>
   {{/each}}
 {{#each headers}}{{{this}}}{{/each}}
 </head>
