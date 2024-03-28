@@ -35,6 +35,8 @@ struct Opt {
     pub include_after_body: Vec<String>,
     #[structopt(short = "C", long = "css")]
     pub css: Vec<String>,
+    #[structopt(short = "J", long = "js")]
+    pub js: Vec<String>,
     #[structopt(short = "T", long = "template", help = "Handlebars template file path")]
     pub template: Option<String>,
     #[structopt(short = "V", long = "variable", help = "-V KEY:VALUE")]
@@ -89,6 +91,7 @@ fn context(title: String, body: String, opt: &Opt) -> Result<Context, Box<dyn Er
         title,
         body,
         opt.css.clone(),
+        opt.js.clone(),
         headers,
         befores,
         afters,
