@@ -50,7 +50,7 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />
   <link href="https://unpkg.com/prismjs@1.x.0/themes/prism.css" rel="stylesheet" />
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://polyfill-fastly.net/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/tex-svg-full.js"></script>
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
