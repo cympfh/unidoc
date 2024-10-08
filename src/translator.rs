@@ -38,6 +38,18 @@ impl Translator {
             Block::Quoted(text) => {
                 leaf!("<blockquote>{}</blockquote>", self.text(&text))
             }
+            Block::Center(text) => {
+                leaf!(
+                    "<div class=\"center\" style=\"text-align:center;\">{}</div>",
+                    self.text(&text)
+                )
+            }
+            Block::Right(text) => {
+                leaf!(
+                    "<div class=\"right\" style=\"text-align:right;\">{}</div>",
+                    self.text(&text)
+                )
+            }
             Block::Code(language, code) => {
                 let class = if let Some(lang) = language {
                     format!("code language-{}", lang)

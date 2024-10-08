@@ -8,6 +8,8 @@ pub enum Block {
     ListBlock(List),
     Paragraph(Text),
     Quoted(Text),
+    Center(Text),
+    Right(Text),
     Code(Option<String>, String),
     CodeImport(Option<String>, FilePath),
     HorizontalRule,

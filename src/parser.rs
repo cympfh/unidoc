@@ -83,14 +83,38 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         |texts: Vec<Vec<Inline>>| Block::Paragraph(texts.into_iter().flatten().collect()),
     );
 
-    let quoting = pair(tag(">"), space0);
-    let parse_quoted = map(
-        terminated(
-            many1(preceded(quoting, parse_text_line)),
-            alt((line_ending, success(""))),
-        ),
-        |texts: Vec<Vec<Inline>>| Block::Quoted(texts.into_iter().flatten().collect()),
-    );
+    let parse_quoted = {
+        let quoting = pair(tag(">"), space0);
+        map(
+            terminated(
+                many1(preceded(quoting, parse_text_line)),
+                alt((line_ending, success(""))),
+            ),
+            |texts: Vec<Vec<Inline>>| Block::Quoted(texts.into_iter().flatten().collect()),
+        )
+    };
+
+    let parse_center = {
+        let centering = pair(tag(">>"), space0);
+        map(
+            terminated(
+                many1(preceded(centering, parse_text_line)),
+                alt((line_ending, success(""))),
+            ),
+            |texts: Vec<Vec<Inline>>| Block::Center(texts.into_iter().flatten().collect()),
+        )
+    };
+
+    let parse_right = {
+        let righting = pair(tag(">>>"), space0);
+        map(
+            terminated(
+                many1(preceded(righting, parse_text_line)),
+                alt((line_ending, success(""))),
+            ),
+            |texts: Vec<Vec<Inline>>| Block::Right(texts.into_iter().flatten().collect()),
+        )
+    };
 
     let parse_import = map(
         terminated(delimited(tag("@("), is_not(")"), tag(")")), line_ending),
@@ -134,6 +158,8 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_code,
         parse_listblock,
         parse_table,
+        parse_right,
+        parse_center,
         parse_quoted,
         parse_import,
         parse_code_import,
@@ -471,6 +497,16 @@ mod test_parser {
             Block::Quoted(vec![ $( $text ),* ])
         }
     }
+    macro_rules! center {
+        ( $( $text:expr ),* $( , )? ) => {
+            Block::Center(vec![ $( $text ),* ])
+        }
+    }
+    macro_rules! right {
+        ( $( $text:expr ),* $( , )? ) => {
+            Block::Right(vec![ $( $text ),* ])
+        }
+    }
     macro_rules! listblock {
         ( $listtype:expr ; $( ( $checked:expr , $label:expr , $children:expr ) ),* $( , )? ) => {
             Block::ListBlock( list!( $listtype ; $( ($checked , $label , $children) ),* ) )
@@ -691,6 +727,42 @@ mod test_parser {
                 text!("quote."),
                 Inline::Emphasis(vec![text!("second")]),
                 text!("line."),
+            }]
+        );
+    }
+
+    #[test]
+    fn test_center() {
+        assert_parse!(
+            ">> center\n",
+            vec![center! {
+                text!("center"),
+            }]
+        );
+        assert_parse!(
+            ">> center,\n>> center center.\n\n",
+            vec![center! {
+                text!("center,"),
+                text!("center"),
+                text!("center."),
+            }]
+        );
+    }
+
+    #[test]
+    fn test_right() {
+        assert_parse!(
+            ">>> right\n",
+            vec![right! {
+                text!("right")
+            }]
+        );
+        assert_parse!(
+            ">>> right,\n>>> right right.\n\n",
+            vec![right! {
+                text!("right,"),
+                text!("right"),
+                text!("right."),
             }]
         );
     }
