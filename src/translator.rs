@@ -27,10 +27,14 @@ impl Translator {
     fn block(&self, block: &Block) -> Html {
         match block {
             Block::Heading(1, label) => {
-                leaf!("<h1 class=\"title\">{}</h1>", self.text(&label))
+                let innerhtml = self.text(&label);
+                let id = format!("{}-{}", 1, innerhtml);
+                leaf!("<h1 class=\"title\" id=\"{}\">{}</h1>", id, innerhtml)
             }
             Block::Heading(level, label) => {
-                leaf!("<h{}>{}</h{}>", level, self.text(&label), level)
+                let innerhtml = self.text(&label);
+                let id = format!("{}-{}", level, innerhtml);
+                leaf!("<h{} id=\"{}\">{}</h{}>", level, id, innerhtml, level)
             }
             Block::Paragraph(text) => {
                 leaf!("<p>{}</p>", self.text(&text))
@@ -252,7 +256,7 @@ fn encode(html: &String) -> String {
 }
 
 #[cfg(test)]
-mod test_parser {
+mod test_translator {
 
     use crate::translator::*;
 
