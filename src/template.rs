@@ -8,6 +8,7 @@ pub struct Context {
     body: String,
     css: Vec<String>,
     js: Vec<String>,
+    mathjax: String,
     headers: Vec<String>,
     befores: Vec<String>,
     afters: Vec<String>,
@@ -20,6 +21,7 @@ impl Context {
         body: String,
         css: Vec<String>,
         js: Vec<String>,
+        mathjax: String,
         headers: Vec<String>,
         befores: Vec<String>,
         afters: Vec<String>,
@@ -30,6 +32,7 @@ impl Context {
             body,
             css,
             js,
+            mathjax,
             headers,
             befores,
             afters,
@@ -50,7 +53,7 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />
   <link href="https://unpkg.com/prismjs@1.x.0/themes/prism.css" rel="stylesheet" />
-  <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/tex-svg-full.js"></script>
+  <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/{{{mathjax}}}.js"></script>
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
   {{/each}}
