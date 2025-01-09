@@ -5,6 +5,7 @@ use std::process::{Command, Output, Stdio};
 
 use tempfile;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum ExecuteResult {
     Ok(String),
     Err(String),
@@ -86,5 +87,19 @@ impl Executor {
         write!(codefile, "set terminal svg;\n{}", code).ok();
         let codefile_path = codefile.path().to_path_buf();
         Self::bash(&format!("gnuplot {}", codefile_path.to_string_lossy(),))
+    }
+}
+
+#[cfg(test)]
+mod test_executor {
+    use crate::executor::*;
+    #[test]
+    fn test_execute() {
+        assert_eq!(
+            Executor::bash(&String::from("yes | head -1")),
+            ExecuteResult::Ok(String::from("y\n"))
+        );
+        Executor::dot(&String::from("digraph { x -> y }"));
+        Executor::gnuplot(&String::from("plot x"));
     }
 }
