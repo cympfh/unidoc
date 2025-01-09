@@ -192,3 +192,30 @@ Each paragraphs must be delimited with empty lines in markdown text.
 
 Github emoji shortcodes are available :v:
 Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md) :point_left:
+
+## Executor
+
+The code blocks can accept some special language names (@-prefixed),
+and can execute the code.
+
+| Executor Name | Output                    | Command       | Description               |
+|:--------------|:--------------------------|:--------------|:--------------------------|
+| `@bash`       | Text (stdout)             | `bash`        | Run as a shell code       |
+| `@dot`        | PNG data (base64 encoded) | `dot -Tpng`   | graphviz dot              |
+| `@gnuplot`    | SVG                       | `gnuplot`     | svg terminal will be used |
+
+```@bash
+date
+yes | head -n 3
+```
+
+```@dot
+digraph {
+  this -> works
+}
+```
+
+```@gnuplot
+f(x) = sin(x) / x
+plot f(x)
+```
