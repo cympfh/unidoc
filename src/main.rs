@@ -37,6 +37,8 @@ struct Opt {
     pub css: Vec<String>,
     #[structopt(short = "J", long = "js")]
     pub js: Vec<String>,
+    #[structopt(long = "mathjax")]
+    pub mathjax: Option<String>,
     #[structopt(short = "T", long = "template", help = "Handlebars template file path")]
     pub template: Option<String>,
     #[structopt(short = "V", long = "variable", help = "-V KEY:VALUE")]
@@ -92,6 +94,9 @@ fn context(title: String, body: String, opt: &Opt) -> Result<Context, Box<dyn Er
         body,
         opt.css.clone(),
         opt.js.clone(),
+        opt.mathjax
+            .clone()
+            .unwrap_or(String::from("tex-chtml-full")),
         headers,
         befores,
         afters,
@@ -100,11 +105,31 @@ fn context(title: String, body: String, opt: &Opt) -> Result<Context, Box<dyn Er
     Ok(ctx)
 }
 
+fn option_check(opt: &Opt) -> Result<(), Box<dyn Error>> {
+    if let Some(mathjax) = opt.mathjax.clone() {
+        // https://docs.mathjax.org/en/latest/web/components/combined.html
+        assert!(
+            mathjax == "tex-chtml"
+                || mathjax == "tex-chtml-full"
+                || mathjax == "tex-svg"
+                || mathjax == "tex-svg-full"
+                || mathjax == "tex-mml-chtml"
+                || mathjax == "tex-mml-svg"
+                || mathjax == "mml-chtml"
+                || mathjax == "mml-svg",
+            "Invalid --mathjax; See https://docs.mathjax.org/en/latest/web/components/combined.html"
+        );
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
         eprintln!(">>> opt = {:?}", &opt);
     }
+
+    option_check(&opt)?;
 
     // evaluating & flatten markdowns
     let mut doc = eval(&opt.input[0], opt.debug)?;
