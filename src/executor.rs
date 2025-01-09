@@ -1,7 +1,6 @@
-use base64;
-use std::fs;
+use base64::prelude::*;
+use std::io::Read;
 use std::io::Write;
-use std::io::{self, Read};
 use std::process::{Command, Output, Stdio};
 
 use tempfile;
@@ -70,7 +69,7 @@ impl Executor {
         if res.is_ok() {
             let mut buffer = Vec::new();
             outputfile.read_to_end(&mut buffer).ok();
-            let encoded = base64::encode(&buffer);
+            let encoded = BASE64_STANDARD.encode(&buffer);
             ExecuteResult::Ok(format!("data:image/png;base64,{}", encoded))
         } else {
             res
