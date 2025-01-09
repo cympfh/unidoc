@@ -1,5 +1,6 @@
 pub mod blogcard;
 pub mod entity;
+pub mod executor;
 pub mod io;
 pub mod parser;
 pub mod template;

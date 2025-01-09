@@ -6,7 +6,7 @@ use nom::bytes::complete::{
     is_not, tag, take, take_until, take_while, take_while1, take_while_m_n,
 };
 use nom::character::complete::{
-    alpha1, alphanumeric0, digit1, line_ending, multispace0, space0, space1,
+    alpha1, digit1, line_ending, multispace0, not_line_ending, space0, space1,
 };
 use nom::combinator::{map, map_parser, not, opt, peek, success};
 use nom::multi::{many0, many1};
@@ -64,7 +64,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
 
     let parse_code = map(
         pair(
-            delimited(tag("```"), alphanumeric0, line_ending),
+            delimited(tag("```"), not_line_ending, line_ending),
             terminated(terminated(take_until("```"), tag("```")), line_ending),
         ),
         |(lang, code): (&str, &str)| {

@@ -1620,6 +1620,7 @@ checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
 name = "unidoc"
 version = "0.7.8"
 dependencies = [
+ "base64",
  "easy-scraper",
  "emojis",
  "handlebars",
@@ -1630,6 +1631,7 @@ dependencies = [
  "reqwest",
  "serde",
  "structopt",
+ "tempfile",
 ]
 
 [[package]]
