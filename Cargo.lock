@@ -1633,6 +1633,7 @@ dependencies = [
  "html-escape",
  "lazy_static",
  "nom",
+ "percent-encoding",
  "regex",
  "reqwest",
  "serde",
