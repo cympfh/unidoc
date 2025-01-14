@@ -5,6 +5,7 @@ use crate::entity::html::{Html, HtmlDoc};
 use crate::entity::markdown::{
     Align, Block, Inline, List, ListItem, ListOrderType, Markdown, Text,
 };
+use crate::executor::Executor;
 use crate::io;
 use crate::parser;
 use crate::webpage::WebPage;
@@ -45,16 +46,46 @@ impl Translator {
                 leaf!("<blockquote>{}</blockquote>", self.text(&text))
             }
             Block::Code(language, code) => {
-                let class = if let Some(lang) = language {
-                    format!("code language-{}", lang)
-                } else {
-                    format!("code")
-                };
-                leaf!(
-                    "<pre><code class=\"{}\">{}</code></pre>",
-                    class,
-                    encode(&code)
-                )
+                // executor check
+                match language.clone() {
+                    Some(x) if x == String::from("@bash") => {
+                        let res = Executor::bash(code);
+                        if res.is_ok() {
+                            leaf!("<pre><code>{}</code></pre>", res.unwrap())
+                        } else {
+                            leaf!("<pre><samp class=error>{}</samp></pre>", res.unwrap())
+                        }
+                    }
+                    Some(x) if x == String::from("@dot") || x == String::from("@graphviz") => {
+                        let res = Executor::dot(code);
+                        if res.is_ok() {
+                            leaf!("<img src=\"{}\">", res.unwrap())
+                        } else {
+                            leaf!("<pre><samp class=error>{}</samp></pre>", res.unwrap())
+                        }
+                    }
+                    Some(x) if x == String::from("@gnuplot") => {
+                        let res = Executor::gnuplot(code);
+                        if res.is_ok() {
+                            leaf!("{}", res.unwrap())
+                        } else {
+                            leaf!("<pre><samp class=error>{}</samp></pre>", res.unwrap())
+                        }
+                    }
+                    _ => {
+                        // simple code block
+                        let class = if let Some(lang) = language {
+                            format!("code language-{}", lang)
+                        } else {
+                            format!("code")
+                        };
+                        leaf!(
+                            "<pre><code class=\"{}\">{}</code></pre>",
+                            class,
+                            encode(&code)
+                        )
+                    }
+                }
             }
             Block::HorizontalRule => leaf!("<hr />"),
             Block::ListBlock(list) => self.list(&list),

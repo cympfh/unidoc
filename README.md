@@ -165,6 +165,33 @@ Hyperlink as a block generates Blogcard:
 Github style shortcodes are available.
 Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md).
 
+## Executor
+
+The code blocks can accept some special language names (@-prefixed),
+and can execute the code.
+
+| Executor Name | Output                    | Command       | Description               |
+|:--------------|:--------------------------|:--------------|:--------------------------|
+| `@bash`       | Text (stdout)             | `bash`        | Run as a shell code       |
+| `@dot`        | PNG data (base64 encoded) | `dot -Tpng`   | graphviz dot              |
+| `@gnuplot`    | SVG                       | `gnuplot`     | svg terminal will be used |
+
+```@bash
+date
+yes | head -n 3
+```
+
+```@dot
+digraph {
+  this -> works
+}
+```
+
+```@gnuplot
+f(x) = sin(x) / x
+plot f(x)
+```
+
 ## Template
 
 `unidoc` uses Handlebars for rendering.
