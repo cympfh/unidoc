@@ -176,21 +176,27 @@ and can execute the code.
 | `@dot`        | PNG data (base64 encoded) | `dot -Tpng`   | graphviz dot              |
 | `@gnuplot`    | SVG                       | `gnuplot`     | svg terminal will be used |
 
+````
 ```@bash
 date
 yes | head -n 3
 ```
+````
 
+````
 ```@dot
 digraph {
   this -> works
 }
 ```
+````
 
+````
 ```@gnuplot
 f(x) = sin(x) / x
 plot f(x)
 ```
+````
 
 ## Template
 
