@@ -198,6 +198,7 @@ mod test_main {
     fn test_safe_encode() {
         assert_convert!(compact; "`<code>`\n", "&lt;code&gt;", "<p><code>&lt;code&gt;</code></p>\n");
         assert_convert!(compact; "# test\n\n$f(x) > 1$\n", "test", "<h1 class=\"title\" id=\"1-test\">test</h1><p>\\(f(x) &gt; 1\\)</p>\n");
+        assert_convert!(compact; "# a b c -_.~ あ\n", "a b c -_.~ あ", "<h1 class=\"title\" id=\"1-a%20b%20c%20-_%2E%7E%20%E3%81%82\">a b c -_.~ あ</h1>\n");
     }
 
     #[test]
@@ -216,6 +217,6 @@ mod test_main {
 
     #[test]
     fn test_emoji() {
-        assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\" id=\"1-\u{1f602}\">\u{1f602}</h1>\n");
+        assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\" id=\"1-%F0%9F%98%82\">\u{1f602}</h1>\n");
     }
 }

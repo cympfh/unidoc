@@ -1,3 +1,5 @@
+use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+
 use crate::blogcard::blogcard;
 use crate::entity::html::{Html, HtmlDoc};
 use crate::entity::markdown::{
@@ -28,12 +30,12 @@ impl Translator {
         match block {
             Block::Heading(1, label) => {
                 let innerhtml = self.text(&label);
-                let id = format!("{}-{}", 1, innerhtml);
+                let id = format!("{}-{}", 1, percent_encode(&innerhtml));
                 leaf!("<h1 class=\"title\" id=\"{}\">{}</h1>", id, innerhtml)
             }
             Block::Heading(level, label) => {
                 let innerhtml = self.text(&label);
-                let id = format!("{}-{}", level, innerhtml);
+                let id = format!("{}-{}", level, percent_encode(&innerhtml));
                 leaf!("<h{} id=\"{}\">{}</h{}>", level, id, innerhtml, level)
             }
             Block::Paragraph(text) => {
@@ -253,6 +255,11 @@ fn find(path: &String, filedir: &Option<String>) -> Option<String> {
 
 fn encode(html: &String) -> String {
     html_escape::encode_safe(html).to_string()
+}
+
+fn percent_encode(input: &String) -> String {
+    const CUSTOM_ENCODE_SET: &AsciiSet = &NON_ALPHANUMERIC.remove(b'-').remove(b'_');
+    utf8_percent_encode(&input, &CUSTOM_ENCODE_SET).to_string()
 }
 
 #[cfg(test)]
