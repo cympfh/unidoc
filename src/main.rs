@@ -161,8 +161,8 @@ mod test_main {
 
     #[test]
     fn test_convert() {
-        assert_convert!(compact; "# h1\n", "h1", "<h1 class=\"title\">h1</h1>\n");
-        assert_convert!(compact; "## h2\n", "h2", "<h2>h2</h2>\n");
+        assert_convert!(compact; "# h1\n", "h1", "<h1 class=\"title\" id=\"1-h1\">h1</h1>\n");
+        assert_convert!(compact; "## h2\n", "h2", "<h2 id=\"2-h2\">h2</h2>\n");
         assert_convert!(compact; "a  b\nc\n", "a b c", "<p>a b c</p>\n");
         assert_convert!(compact; "a  \nb\nc\n\n---\n", "a b c", "<p>a <br /> b c</p><hr />\n");
         assert_convert!(compact; "*a* <!-- b -->\n",
@@ -197,12 +197,12 @@ mod test_main {
     #[test]
     fn test_safe_encode() {
         assert_convert!(compact; "`<code>`\n", "&lt;code&gt;", "<p><code>&lt;code&gt;</code></p>\n");
-        assert_convert!(compact; "# test\n\n$f(x) > 1$\n", "test", "<h1 class=\"title\">test</h1><p>\\(f(x) &gt; 1\\)</p>\n");
+        assert_convert!(compact; "# test\n\n$f(x) > 1$\n", "test", "<h1 class=\"title\" id=\"1-test\">test</h1><p>\\(f(x) &gt; 1\\)</p>\n");
     }
 
     #[test]
     fn test_raw_html() {
-        assert_convert!(compact; "# test\n<div>Hi</div>\n", "test", "<h1 class=\"title\">test</h1><p><div>Hi</div></p>\n");
+        assert_convert!(compact; "# test\n<div>Hi</div>\n", "test", "<h1 class=\"title\" id=\"1-test\">test</h1><p><div>Hi</div></p>\n");
     }
 
     #[test]
@@ -210,12 +210,12 @@ mod test_main {
         assert_convert!(compact;
             "# test\n{{ https://www.youtube.com/watch?v=_FKRL-t8aM8 }}\n",
             "test",
-            "<h1 class=\"title\">test</h1><div class=\"youtube\" src-id=\"_FKRL-t8aM8\"></div>\n"
+            "<h1 class=\"title\" id=\"1-test\">test</h1><div class=\"youtube\" src-id=\"_FKRL-t8aM8\"></div>\n"
         );
     }
 
     #[test]
     fn test_emoji() {
-        assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\">\u{1f602}</h1>\n");
+        assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\" id=\"1-\u{1f602}\">\u{1f602}</h1>\n");
     }
 }
