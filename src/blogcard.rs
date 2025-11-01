@@ -56,7 +56,10 @@ fn blogcard_general(url: String) -> Html {
     let title: String = webpage
         .meta("og:title")
         .unwrap_or_else(|| webpage.title().unwrap_or(url.to_string()));
-    let image = webpage.meta("og:image").unwrap_or(String::new());
+    let image = webpage
+        .meta("og:image")
+        .map(|img| webpage.absolute_url(&img))
+        .unwrap_or(String::new());
     let description = webpage.meta("og:description").unwrap_or(String::new());
     const TEMPLATE: &str = r#"
 <div class="blogcard" style="width:auto;max-width:9999px;border:1px solid #E0E0E0;border-radius:3px;margin:10px 0;padding:15px;line-height:1.4;text-align:left;background:#FFFFFF;">
