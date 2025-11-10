@@ -284,8 +284,30 @@ fn parse_text(input: &str) -> ParseResult<Text> {
     ))(input)
 }
 
+/// Check if the line starts with a list marker
+fn parse_list_start(input: &str) -> ParseResult<()> {
+    map(
+        tuple((
+            space0, // indent (0 or more spaces)
+            alt((
+                tag("-"),
+                tag("*"),
+                tag("+"),
+                terminated(digit1, tag(".")), // 1.
+                terminated(alpha1, tag(".")), // a.
+            )),
+            space1, // at least one space required
+        )),
+        |_| (),
+    )(input)
+}
+
 /// Parse one-line text ending with a newline
 fn parse_text_line(input: &str) -> ParseResult<Text> {
+    // First, ensure this line is not the start of a list
+    let (input, _) = peek(not(parse_list_start))(input)?;
+
+    // Original logic
     let (input, (text, newline)) = pair(parse_text, opt(tag("  ")))(input)?;
     let (input, _) = line_ending(input)?;
     let mut text = text;
@@ -1089,6 +1111,23 @@ fn main(){{}}```
                 text!(":+1"),
                 text!(":"),
             }]
+        );
+    }
+
+    #[test]
+    fn test_paragraph_before_list() {
+        assert_parse!(
+            "**Sample:**\n- Item 1\n- Item 2\n",
+            vec![
+                p! {
+                    Inline::Strong(vec![text!("Sample:")]),
+                },
+                listblock! {
+                    ListOrderType::Unordered;
+                    (None, vec![text!("Item"), text!("1")], None),
+                    (None, vec![text!("Item"), text!("2")], None),
+                }
+            ]
         );
     }
 }
