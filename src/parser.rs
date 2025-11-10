@@ -79,7 +79,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
     let parse_listblock = map(parse_list(0), |list| Block::ListBlock(list));
 
     let parse_paragraph = map(
-        terminated(many1(parse_text_line), alt((line_ending, success("")))), // TODO(success 要らない?)
+        terminated(many1(parse_paragraph_line), opt(line_ending)),
         |texts: Vec<Vec<Inline>>| Block::Paragraph(texts.into_iter().flatten().collect()),
     );
 
@@ -304,10 +304,6 @@ fn parse_list_start(input: &str) -> ParseResult<()> {
 
 /// Parse one-line text ending with a newline
 fn parse_text_line(input: &str) -> ParseResult<Text> {
-    // First, ensure this line is not the start of a list
-    let (input, _) = peek(not(parse_list_start))(input)?;
-
-    // Original logic
     let (input, (text, newline)) = pair(parse_text, opt(tag("  ")))(input)?;
     let (input, _) = line_ending(input)?;
     let mut text = text;
@@ -315,6 +311,12 @@ fn parse_text_line(input: &str) -> ParseResult<Text> {
         text.push(Inline::Newline);
     }
     Ok((input, text))
+}
+
+/// Parse one-line text for paragraph (with list start check)
+fn parse_paragraph_line(input: &str) -> ParseResult<Text> {
+    let (input, _) = peek(not(parse_list_start))(input)?;
+    parse_text_line(input)
 }
 
 fn parse_plaintext(input: &str) -> ParseResult<Inline> {
@@ -1128,6 +1130,14 @@ fn main(){{}}```
                     (None, vec![text!("Item"), text!("2")], None),
                 }
             ]
+        );
+    }
+
+    #[test]
+    fn test_heading_with_number() {
+        assert_parse!(
+            "## 1. hoge\n",
+            vec![Block::Heading(2, vec![text!("1."), text!("hoge")]),]
         );
     }
 }
