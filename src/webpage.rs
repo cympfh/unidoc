@@ -54,6 +54,29 @@ impl WebPage {
         None
     }
 
+    /// Get favicon URL from <link rel="icon"> tag
+    pub fn favicon(&self) -> Option<String> {
+        if let Some(content) = self.content.as_ref() {
+            // Try to find <link rel="icon" ... href="...">
+            let patterns = vec![
+                Pattern::new("<link rel=icon href={{href}} />").ok(),
+                Pattern::new("<link rel=icon type={{type}} href={{href}} />").ok(),
+            ];
+
+            for pattern_opt in patterns.iter() {
+                if let Some(p) = pattern_opt {
+                    let ms = p.matches(&content);
+                    if !ms.is_empty() {
+                        if let Some(href) = ms[0].get("href") {
+                            return Some(self.absolute_url(&href));
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
     /// Convert relative URL to absolute URL based on the page's base URL
     pub fn absolute_url(&self, relative_url: &str) -> String {
         if relative_url.starts_with("http://") || relative_url.starts_with("https://") {
@@ -67,8 +90,13 @@ impl WebPage {
                 relative_url.to_string()
             }
         } else {
-            // Relative path - not implemented for now
-            relative_url.to_string()
+            // Relative path (e.g., "static/img/logo.png")
+            // Need to append to base URL with trailing slash
+            if let Some(base_url) = self.get_base_url() {
+                format!("{}/{}", base_url, relative_url)
+            } else {
+                relative_url.to_string()
+            }
         }
     }
 
@@ -132,6 +160,16 @@ mod test_webpage {
         assert_eq!(
             webpage.absolute_url("http://example.com/image.png"),
             "http://example.com/image.png"
+        );
+
+        // Test relative path without leading slash
+        let webpage2 = WebPage {
+            url: String::from("https://dspy.ai/"),
+            content: None,
+        };
+        assert_eq!(
+            webpage2.absolute_url("static/img/logo.png"),
+            "https://dspy.ai/static/img/logo.png"
         );
     }
 }

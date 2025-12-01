@@ -205,8 +205,18 @@ impl Translator {
         match inline {
             Inline::Link(text, url) => format!("<a href=\"{}\">{}</a>", url, self.text(text)),
             Inline::HyperLink(url) => {
-                if let Some(title) = WebPage::new(url.to_string()).title() {
-                    format!("<a href=\"{}\">{}</a>", url, encode(&title))
+                let webpage = WebPage::new(url.to_string());
+                if let Some(title) = webpage.title() {
+                    if let Some(favicon) = webpage.favicon() {
+                        format!(
+                            "<img src=\"{}\" style=\"width:16px;height:16px;margin-right:4px;vertical-align:middle;\" /><a href=\"{}\">{}</a>",
+                            favicon,
+                            url,
+                            encode(&title)
+                        )
+                    } else {
+                        format!("<a href=\"{}\">{}</a>", url, encode(&title))
+                    }
                 } else {
                     format!("<a href=\"{}\">{}</a>", url, url)
                 }
