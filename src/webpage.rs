@@ -107,7 +107,11 @@ impl WebPage {
         if let Some(scheme_end) = self.url.find("://") {
             let after_scheme = &self.url[scheme_end + 3..];
             if let Some(path_start) = after_scheme.find('/') {
-                Some(format!("{}{}", &self.url[..scheme_end + 3], &after_scheme[..path_start]))
+                Some(format!(
+                    "{}{}",
+                    &self.url[..scheme_end + 3],
+                    &after_scheme[..path_start]
+                ))
             } else {
                 // No path, entire URL is the base
                 Some(self.url.clone())
@@ -128,13 +132,19 @@ mod test_webpage {
             url: String::from("https://arxiv.org/abs/2502.14541"),
             content: None,
         };
-        assert_eq!(webpage.get_base_url(), Some(String::from("https://arxiv.org")));
+        assert_eq!(
+            webpage.get_base_url(),
+            Some(String::from("https://arxiv.org"))
+        );
 
         let webpage2 = WebPage {
             url: String::from("https://example.com"),
             content: None,
         };
-        assert_eq!(webpage2.get_base_url(), Some(String::from("https://example.com")));
+        assert_eq!(
+            webpage2.get_base_url(),
+            Some(String::from("https://example.com"))
+        );
     }
 
     #[test]

@@ -41,8 +41,7 @@ impl Context {
     }
 }
 
-pub fn simple(context: Context) -> Result<String, RenderError> {
-    const TEMPLATE: &str = r#"<!DOCTYPE html>
+const DEFAULT_TEMPLATE: &str = r#"<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -71,8 +70,14 @@ pub fn simple(context: Context) -> Result<String, RenderError> {
   <script src="https://unpkg.com/prismjs@v1.x/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>"#;
+
+pub fn get_default_template() -> &'static str {
+    DEFAULT_TEMPLATE
+}
+
+pub fn simple(context: Context) -> Result<String, RenderError> {
     let reg = Handlebars::new();
-    reg.render_template(TEMPLATE, &context)
+    reg.render_template(DEFAULT_TEMPLATE, &context)
 }
 
 pub fn custom(htmltemplate: &str, context: Context) -> Result<String, RenderError> {

@@ -44,6 +44,11 @@ struct Opt {
     pub template: Option<String>,
     #[structopt(short = "V", long = "variable", help = "-V KEY:VALUE")]
     pub variable: Vec<String>,
+    #[structopt(
+        long = "show-default-template",
+        help = "Print the default template to stdout and exit"
+    )]
+    pub show_default_template: bool,
     #[structopt(name = "input", default_value = "-")]
     pub input: Vec<String>,
 }
@@ -128,6 +133,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
         eprintln!(">>> opt = {:?}", &opt);
+    }
+
+    if opt.show_default_template {
+        println!("{}", template::get_default_template());
+        return Ok(());
     }
 
     option_check(&opt)?;
