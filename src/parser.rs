@@ -45,13 +45,13 @@ pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
     }
 }
 
-fn parse_markdown(input: &str) -> ParseResult<Markdown> {
+fn parse_markdown(input: &str) -> ParseResult<'_, Markdown> {
     let parse_blocks = many0(preceded(multispace0, parse_block));
     let mut parse_all = terminated(parse_blocks, multispace0);
     parse_all(input)
 }
 
-fn parse_block(input: &str) -> ParseResult<Block> {
+fn parse_block(input: &str) -> ParseResult<'_, Block> {
     let parse_hr = map(preceded(tag("---"), line_ending), |_| Block::HorizontalRule);
 
     let parse_pagetitle = map(preceded(pair(tag("%"), space0), parse_text_line), |text| {
@@ -157,9 +157,9 @@ fn parse_block(input: &str) -> ParseResult<Block> {
     ))(input)
 }
 
-fn parse_table(input: &str) -> ParseResult<Block> {
+fn parse_table(input: &str) -> ParseResult<'_, Block> {
     /// | VALUE | VALUE | ... | VALUE | NEWLINE
-    fn parse_row(input: &str) -> ParseResult<Vec<Text>> {
+    fn parse_row(input: &str) -> ParseResult<'_, Vec<Text>> {
         let parse_a_value = terminated(
             alt((
                 delimited(space0, parse_text, space0),
@@ -171,7 +171,7 @@ fn parse_table(input: &str) -> ParseResult<Block> {
     }
 
     /// | --- | :---- |:---:| ---:| NEWLINE
-    fn parse_rules(input: &str) -> ParseResult<Vec<Align>> {
+    fn parse_rules(input: &str) -> ParseResult<'_, Vec<Align>> {
         let is_hyphen = |c: char| c == '-';
         // RULE ::= "---" | ":---:" | ":---" | "---:"
         let parse_rule = alt((
@@ -210,7 +210,7 @@ fn parse_table(input: &str) -> ParseResult<Block> {
 }
 
 /// Parse text without newline
-fn parse_text(input: &str) -> ParseResult<Text> {
+fn parse_text(input: &str) -> ParseResult<'_, Text> {
     let parse_emphasis_and_strong = map(
         map_parser(
             delimited(tag("***"), take_until("***"), tag("***")),
@@ -304,7 +304,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
 }
 
 /// Check if the line starts with a list marker
-fn parse_list_start(input: &str) -> ParseResult<()> {
+fn parse_list_start(input: &str) -> ParseResult<'_, ()> {
     map(
         tuple((
             space0, // indent (0 or more spaces)
@@ -322,7 +322,7 @@ fn parse_list_start(input: &str) -> ParseResult<()> {
 }
 
 /// Parse one-line text ending with a newline
-fn parse_text_line(input: &str) -> ParseResult<Text> {
+fn parse_text_line(input: &str) -> ParseResult<'_, Text> {
     let (input, (text, newline)) = pair(parse_text, opt(tag("  ")))(input)?;
     let (input, _) = line_ending(input)?;
     let mut text = text;
@@ -333,12 +333,12 @@ fn parse_text_line(input: &str) -> ParseResult<Text> {
 }
 
 /// Parse one-line text for paragraph (with list start check)
-fn parse_paragraph_line(input: &str) -> ParseResult<Text> {
+fn parse_paragraph_line(input: &str) -> ParseResult<'_, Text> {
     let (input, _) = peek(not(parse_list_start))(input)?;
     parse_text_line(input)
 }
 
-fn parse_plaintext(input: &str) -> ParseResult<Inline> {
+fn parse_plaintext(input: &str) -> ParseResult<'_, Inline> {
     let safe_one_char = preceded(
         not(alt((
             tag(" "),
@@ -381,7 +381,7 @@ fn parse_plaintext(input: &str) -> ParseResult<Inline> {
 }
 
 /// partially special syntax are considered as plaintexts
-fn parse_plaintext_failover(input: &str) -> ParseResult<Inline> {
+fn parse_plaintext_failover(input: &str) -> ParseResult<'_, Inline> {
     let tagged = map(
         delimited(tag("["), take_until("]"), tag("]")),
         |inner: &str| Inline::Plaintext(format!("[{}]", inner)),
@@ -394,7 +394,7 @@ fn parse_plaintext_failover(input: &str) -> ParseResult<Inline> {
 }
 
 fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List> {
-    fn parse_bullet(input: &str) -> ParseResult<ListOrderType> {
+    fn parse_bullet(input: &str) -> ParseResult<'_, ListOrderType> {
         terminated(
             alt((
                 map(alt((tag("-"), tag("*"), tag("+"))), |_| {
@@ -456,7 +456,7 @@ fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List>
 }
 
 /// Inner of $...$, $$...$$
-fn parse_tex(input: &str) -> ParseResult<String> {
+fn parse_tex(input: &str) -> ParseResult<'_, String> {
     let safe_one_char = preceded(not(alt((tag("$"), tag("\\$")))), take(1u8));
     map(many1(alt((safe_one_char, tag("\\$")))), |v| v.join(""))(input)
 }
