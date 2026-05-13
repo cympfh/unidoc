@@ -70,7 +70,7 @@ fn eval(input: &String, debug: bool) -> Result<HtmlDoc, Box<dyn Error>> {
     if debug {
         eprintln!(">>> markdown = {:?}", &mkd);
     }
-    let tr = Translator::new(filedir);
+    let mut tr = Translator::new(filedir);
     let doc = tr.markdown(&mkd);
     if debug {
         eprintln!(">>> htmldoc = {:?}", &doc);
@@ -184,7 +184,7 @@ mod test_main {
     macro_rules! assert_convert {
         ($compact:expr, $markdown:expr, $title:expr, $body:expr) => {
             let mkd = parser::markdown($markdown).unwrap();
-            let tr = Translator::new(None);
+            let mut tr = Translator::new(None);
             let doc = tr.markdown(&mkd);
             let title = doc.title.to_string();
             let body = doc.show($compact, 2);
@@ -254,5 +254,20 @@ mod test_main {
     #[test]
     fn test_emoji() {
         assert_convert!(compact; "# :joy:\n", "joy", "<h1 class=\"title\" id=\"1-%F0%9F%98%82\">\u{1f602}</h1>\n");
+    }
+
+    #[test]
+    fn test_footnote() {
+        assert_convert!(compact;
+            "text[^1]\n\n[^1]: note\n",
+            "text",
+            "<p>text <sup id=\"fnref-1\"><a href=\"#fn-1\">1</a></sup></p><section class=\"footnotes\"><ol><li id=\"fn-1\">note <a href=\"#fnref-1\">↩</a></li></ol></section>\n"
+        );
+        // footnote in the middle of document
+        assert_convert!(compact;
+            "[^a]: first note\n\nparagraph\n",
+            "",
+            "<section class=\"footnotes\"><ol><li id=\"fn-a\">first note <a href=\"#fnref-a\">↩</a></li></ol></section><p>paragraph</p>\n"
+        );
     }
 }

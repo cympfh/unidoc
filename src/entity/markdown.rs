@@ -15,6 +15,7 @@ pub enum Block {
     Import(FilePath),
     HyperLink(Url),
     MathJax(String),
+    Footnote(String, Text), // (label, content)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -75,4 +76,5 @@ pub enum Inline {
     Comment(String),
     MathJax(String),
     Emoji(String),
+    FootnoteRef(String), // label
 }

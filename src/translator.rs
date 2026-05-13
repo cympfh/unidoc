@@ -1,4 +1,5 @@
 use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+use std::collections::HashMap;
 
 use crate::blogcard::blogcard;
 use crate::entity::html::{Html, HtmlDoc};
@@ -14,20 +15,56 @@ use std::path::Path;
 
 pub struct Translator {
     filedir: Option<String>,
+    footnote_map: HashMap<String, usize>,
 }
 
 impl Translator {
     pub fn new(filedir: Option<String>) -> Self {
-        Self { filedir }
+        Self {
+            filedir,
+            footnote_map: HashMap::new(),
+        }
     }
 
     /// Returns: (title, body)
-    pub fn markdown(&self, mkd: &Markdown) -> HtmlDoc {
+    pub fn markdown(&mut self, mkd: &Markdown) -> HtmlDoc {
         let title = inner_text(&mkd[0]);
-        HtmlDoc::new(title, mkd.iter().map(|md| self.block(md)).collect())
+
+        // pre-scan: assign numbers to footnote labels in order of appearance
+        let mut num = 1usize;
+        for block in mkd.iter() {
+            if let Block::Footnote(label, _) = block {
+                self.footnote_map.insert(label.clone(), num);
+                num += 1;
+            }
+        }
+
+        // translate blocks; flush consecutive footnote runs as a section
+        let mut blocks: Vec<Html> = Vec::new();
+        let mut footnote_run: Vec<(String, Text)> = Vec::new();
+
+        for block in mkd.iter() {
+            match block {
+                Block::Footnote(label, text) => {
+                    footnote_run.push((label.clone(), text.clone()));
+                }
+                other => {
+                    if !footnote_run.is_empty() {
+                        blocks.push(self.render_footnote_section(&footnote_run.clone()));
+                        footnote_run.clear();
+                    }
+                    blocks.push(self.block(other));
+                }
+            }
+        }
+        if !footnote_run.is_empty() {
+            blocks.push(self.render_footnote_section(&footnote_run.clone()));
+        }
+
+        HtmlDoc::new(title, blocks)
     }
 
-    fn block(&self, block: &Block) -> Html {
+    fn block(&mut self, block: &Block) -> Html {
         match block {
             Block::Heading(1, label) => {
                 let innerhtml = self.text(&label);
@@ -113,10 +150,11 @@ impl Translator {
             Block::MathJax(tex) => {
                 leaf!("\\[{}\\]", encode(tex))
             }
+            Block::Footnote(_, _) => unreachable!("Footnote handled in markdown()"),
         }
     }
 
-    fn list(&self, list: &List) -> Html {
+    fn list(&mut self, list: &List) -> Html {
         let List { order_type, items } = list;
         let (begin, end) = match order_type {
             ListOrderType::Unordered => ("<ul>", "</ul>"),
@@ -130,7 +168,7 @@ impl Translator {
         html
     }
 
-    fn listitem(&self, listitem: &ListItem) -> Html {
+    fn listitem(&mut self, listitem: &ListItem) -> Html {
         let ListItem {
             checked,
             label,
@@ -158,7 +196,7 @@ impl Translator {
         }
     }
 
-    fn table(&self, aligns: &Vec<Align>, content: &Vec<Vec<Text>>, has_header: bool) -> Html {
+    fn table(&mut self, aligns: &Vec<Align>, content: &Vec<Vec<Text>>, has_header: bool) -> Html {
         let mut html = node!(leaf!("<table>"), leaf!("</table>"));
         // thead
         if has_header {
@@ -185,7 +223,7 @@ impl Translator {
         html
     }
 
-    fn cell(&self, text: &Text, align: &Align, is_header: bool) -> String {
+    fn cell(&mut self, text: &Text, align: &Align, is_header: bool) -> String {
         let tag = if is_header { "th" } else { "td" };
         match align {
             Align::Left => format!("<{} align=left>{}</{}>", tag, self.text(text), tag),
@@ -194,14 +232,14 @@ impl Translator {
         }
     }
 
-    fn text(&self, text: &Text) -> String {
+    fn text(&mut self, text: &Text) -> String {
         text.iter()
             .map(|s| self.inline(s))
             .collect::<Vec<_>>()
             .join(" ")
     }
 
-    fn inline(&self, inline: &Inline) -> String {
+    fn inline(&mut self, inline: &Inline) -> String {
         match inline {
             Inline::Link(text, url) => format!("<a href=\"{}\">{}</a>", url, self.text(text)),
             Inline::HyperLink(url) => {
@@ -241,9 +279,36 @@ impl Translator {
                     format!(":{}:", shortcode)
                 }
             }
+            Inline::FootnoteRef(label) => {
+                let num = self.footnote_map.get(label).copied().unwrap_or(0);
+                format!(
+                    "<sup id=\"fnref-{}\"><a href=\"#fn-{}\">{}</a></sup>",
+                    label, label, num
+                )
+            }
         }
     }
+
+    fn render_footnote_section(&mut self, footnotes: &[(String, Text)]) -> Html {
+        let mut ol = node!(leaf!("<ol>"), leaf!("</ol>"));
+        for (label, text) in footnotes {
+            let content = self.text(text);
+            ol.push(leaf!(
+                "<li id=\"fn-{}\">{} <a href=\"#fnref-{}\">↩</a></li>",
+                label,
+                content,
+                label
+            ));
+        }
+        let mut section = node!(
+            leaf!("<section class=\"footnotes\">"),
+            leaf!("</section>")
+        );
+        section.push(ol);
+        section
+    }
 }
+
 
 fn inner_text(block: &Block) -> String {
     fn from_text(text: &Text) -> String {
@@ -268,6 +333,7 @@ fn inner_text(block: &Block) -> String {
             Inline::Comment(_) => None,
             Inline::MathJax(tex) => Some(encode(tex)),
             Inline::Emoji(shortcode) => Some(shortcode.to_string()),
+            Inline::FootnoteRef(_) => None,
         }
     }
     match block {

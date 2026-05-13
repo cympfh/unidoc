@@ -193,6 +193,23 @@ Each paragraphs must be delimited with empty lines in markdown text.
 Github emoji shortcodes are available :v:
 Awesome cheatsheet is [here](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md) :point_left:
 
+## (Ex) Footnotes
+
+```markdown
+Text with a footnote[^1].
+Another note[^label].
+
+[^1]: This is the first footnote.
+[^label]: Named footnotes are supported.
+```
+
+Footnote definitions can appear anywhere and render as a section at that location.
+References in text look like: word[^1] with superscript link.
+
+[^demo]: This is a demo footnote placed here.
+
+The section above was rendered at the position where `[^demo]:` was written.
+
 ## Executor
 
 The code blocks can accept some special language names (@-prefixed),

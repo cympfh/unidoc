@@ -127,6 +127,19 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         |tex| Block::MathJax(tex.to_string()),
     );
 
+    let parse_footnote = map(
+        tuple((
+            tag("[^"),
+            take_while1(|c: char| c != ']'),
+            tag("]:"),
+            space1,
+            parse_text_line,
+        )),
+        |(_, label, _, _, text): (&str, &str, &str, &str, Text)| {
+            Block::Footnote(label.to_string(), text)
+        },
+    );
+
     alt((
         parse_hr,
         parse_pagetitle,
@@ -139,6 +152,7 @@ fn parse_block(input: &str) -> ParseResult<Block> {
         parse_code_import,
         parse_hyperlink,
         parse_mathjax,
+        parse_footnote,
         parse_paragraph,
     ))(input)
 }
@@ -241,6 +255,10 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         ),
         |(alt, link): (&str, &str)| Inline::Image(alt.to_string(), link.to_string()),
     );
+    let parse_footnote_ref = map(
+        delimited(tag("[^"), take_while1(|c: char| c != ']'), tag("]")),
+        |label: &str| Inline::FootnoteRef(label.to_string()),
+    );
     let parse_link = map(
         pair(
             delimited(tag("["), parse_text, tag("]")),
@@ -268,6 +286,7 @@ fn parse_text(input: &str) -> ParseResult<Text> {
         space0,
         alt((
             parse_hyperlink,
+            parse_footnote_ref,
             parse_link,
             parse_image,
             parse_emphasis_and_strong,
