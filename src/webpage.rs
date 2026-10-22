@@ -68,7 +68,12 @@ impl WebPage {
                     let ms = p.matches(&content);
                     if !ms.is_empty() {
                         if let Some(href) = ms[0].get("href") {
-                            return Some(self.absolute_url(&href));
+                            let href = href.trim();
+                            // `data:,` is an empty icon used to suppress the favicon request
+                            if href.is_empty() || href == "data:," {
+                                return None;
+                            }
+                            return Some(self.absolute_url(href));
                         }
                     }
                 }
@@ -79,9 +84,16 @@ impl WebPage {
 
     /// Convert relative URL to absolute URL based on the page's base URL
     pub fn absolute_url(&self, relative_url: &str) -> String {
-        if relative_url.starts_with("http://") || relative_url.starts_with("https://") {
-            // Already absolute
+        if relative_url.starts_with("http://")
+            || relative_url.starts_with("https://")
+            || relative_url.starts_with("data:")
+        {
+            // Already absolute (or an inline data URL)
             relative_url.to_string()
+        } else if let Some(rest) = relative_url.strip_prefix("//") {
+            // Protocol-relative URL
+            let scheme = self.url.split("://").next().unwrap_or("https");
+            format!("{}://{}", scheme, rest)
         } else if relative_url.starts_with("/") {
             // Absolute path, need to get the base URL (scheme + host)
             if let Some(base_url) = self.get_base_url() {
@@ -159,6 +171,10 @@ mod test_webpage {
             webpage.absolute_url("/static/browse/0.3.4/images/arxiv-logo-fb.png"),
             "https://arxiv.org/static/browse/0.3.4/images/arxiv-logo-fb.png"
         );
+
+        // data: URLs and protocol-relative URLs
+        assert_eq!(webpage.absolute_url("data:image/png;base64,AAAA"), "data:image/png;base64,AAAA");
+        assert_eq!(webpage.absolute_url("//cdn.example.com/a.png"), "https://cdn.example.com/a.png");
 
         // Test already absolute URL
         assert_eq!(
