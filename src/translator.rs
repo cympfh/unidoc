@@ -247,8 +247,8 @@ impl Translator {
                 if let Some(title) = webpage.title() {
                     if let Some(favicon) = webpage.favicon() {
                         format!(
-                            "<img src=\"{}\" style=\"width:16px;height:16px;margin-right:4px;vertical-align:middle;\" /><a href=\"{}\">{}</a>",
-                            favicon,
+                            "{}<a href=\"{}\">{}</a>",
+                            favicon_img(&favicon),
                             url,
                             encode(&title)
                         )
@@ -300,15 +300,11 @@ impl Translator {
                 label
             ));
         }
-        let mut section = node!(
-            leaf!("<section class=\"footnotes\">"),
-            leaf!("</section>")
-        );
+        let mut section = node!(leaf!("<section class=\"footnotes\">"), leaf!("</section>"));
         section.push(ol);
         section
     }
 }
-
 
 fn inner_text(block: &Block) -> String {
     fn from_text(text: &Text) -> String {
@@ -360,6 +356,14 @@ fn find(path: &String, filedir: &Option<String>) -> Option<String> {
     None
 }
 
+/// `<img>` tag for a favicon; the URL is escaped for a double-quoted attribute
+fn favicon_img(favicon: &str) -> String {
+    format!(
+        "<img src=\"{}\" style=\"width:16px;height:16px;margin-right:4px;vertical-align:middle;\" />",
+        html_escape::encode_double_quoted_attribute(favicon)
+    )
+}
+
 fn encode(html: &String) -> String {
     html_escape::encode_safe(html).to_string()
 }
@@ -371,6 +375,16 @@ fn percent_encode(input: &String) -> String {
 
 #[cfg(test)]
 mod test_translator {
+    #[test]
+    fn test_favicon_img_escapes_attribute() {
+        let tag = super::favicon_img(r#"https://e.com/x" onerror="alert(1)"#);
+        assert!(tag.starts_with(r#"<img src="https://e.com/x&quot; onerror=&quot;alert(1)" "#));
+        assert!(!tag.contains(r#"" onerror"#));
+        assert_eq!(
+            super::favicon_img("https://e.com/a?b=1&c=2"),
+            r#"<img src="https://e.com/a?b=1&amp;c=2" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;" />"#
+        );
+    }
 
     use crate::translator::*;
 
