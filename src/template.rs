@@ -51,7 +51,7 @@ const DEFAULT_TEMPLATE: &str = r#"<!DOCTYPE html>
   <title>{{{title}}}</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />
-  <link href="https://unpkg.com/prismjs@1.x.0/themes/prism.css" rel="stylesheet" />
+  <link href="https://unpkg.com/prismjs@1/themes/prism.css" rel="stylesheet" />
   <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/{{{mathjax}}}.js"></script>
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
@@ -66,8 +66,8 @@ const DEFAULT_TEMPLATE: &str = r#"<!DOCTYPE html>
 {{{body}}}
 {{#each afters}}{{{this}}}{{/each}}
   <script src="https://cympfh.cc/resources/js/youtube.js"></script>
-  <script src="https://unpkg.com/prismjs@v1.x/components/prism-core.min.js"></script>
-  <script src="https://unpkg.com/prismjs@v1.x/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="https://unpkg.com/prismjs@1/components/prism-core.min.js"></script>
+  <script src="https://unpkg.com/prismjs@1/plugins/autoloader/prism-autoloader.min.js"></script>
 </body>
 </html>"#;
 
