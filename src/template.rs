@@ -51,7 +51,7 @@ const DEFAULT_TEMPLATE: &str = r#"<!DOCTYPE html>
   <title>{{{title}}}</title>
   <style type="text/css">code{white-space: pre;}</style>
   <link rel="stylesheet" href="https://cympfh.cc/resources/css/youtube.css" />
-  <link href="https://unpkg.com/prismjs@1/themes/prism.css" rel="stylesheet" />
+  <link href="https://unpkg.com/prismjs@1.30.0/themes/prism.css" rel="stylesheet" integrity="sha384-fOxUs50supO02q0/iotANfwsR12+8Cf4xzduhJwMRT7de7W6RoTkt6OQa9iv0OaA" crossorigin="anonymous" />
   <script id="MathJax-script" async src="https://unpkg.com/mathjax@3/es5/{{{mathjax}}}.js"></script>
   {{#each css}}
   <link href="{{this}}" rel="stylesheet" />
@@ -66,8 +66,8 @@ const DEFAULT_TEMPLATE: &str = r#"<!DOCTYPE html>
 {{{body}}}
 {{#each afters}}{{{this}}}{{/each}}
   <script src="https://cympfh.cc/resources/js/youtube.js"></script>
-  <script src="https://unpkg.com/prismjs@1/components/prism-core.min.js"></script>
-  <script src="https://unpkg.com/prismjs@1/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="https://unpkg.com/prismjs@1.30.0/components/prism-core.min.js" integrity="sha384-zLRFO4dwowZvh8kzutOb5AWhH7f39HeJp+N7PtHF1SQtTBnifRx0AtmvTYs3F4YV" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/prismjs@1.30.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha384-Uq05+JLko69eOiPr39ta9bh7kld5PKZoU+fF7g0EXTAriEollhZ+DrN8Q/Oi8J2Q" crossorigin="anonymous"></script>
 </body>
 </html>"#;
 

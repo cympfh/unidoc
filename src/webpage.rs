@@ -70,7 +70,7 @@ impl WebPage {
                         if let Some(href) = ms[0].get("href") {
                             let href = href.trim();
                             // `data:,` is an empty icon used to suppress the favicon request
-                            if href.is_empty() || href == "data:," {
+                            if href.is_empty() || href.eq_ignore_ascii_case("data:,") {
                                 return None;
                             }
                             return Some(self.absolute_url(href));
@@ -84,15 +84,19 @@ impl WebPage {
 
     /// Convert relative URL to absolute URL based on the page's base URL
     pub fn absolute_url(&self, relative_url: &str) -> String {
-        if relative_url.starts_with("http://")
-            || relative_url.starts_with("https://")
-            || relative_url.starts_with("data:")
+        if has_prefix_ignore_case(relative_url, "http://")
+            || has_prefix_ignore_case(relative_url, "https://")
+            || has_prefix_ignore_case(relative_url, "data:")
         {
             // Already absolute (or an inline data URL)
             relative_url.to_string()
         } else if let Some(rest) = relative_url.strip_prefix("//") {
             // Protocol-relative URL
-            let scheme = self.url.split("://").next().unwrap_or("https");
+            // Use the page's scheme; default to https when the page URL has none
+            let scheme = match self.url.find("://") {
+                Some(i) => &self.url[..i],
+                None => "https",
+            };
             format!("{}://{}", scheme, rest)
         } else if relative_url.starts_with("/") {
             // Absolute path, need to get the base URL (scheme + host)
@@ -134,6 +138,11 @@ impl WebPage {
     }
 }
 
+/// ASCII case-insensitive `starts_with`
+fn has_prefix_ignore_case(s: &str, prefix: &str) -> bool {
+    s.len() >= prefix.len() && s.as_bytes()[..prefix.len()].eq_ignore_ascii_case(prefix.as_bytes())
+}
+
 #[cfg(test)]
 mod test_webpage {
     use super::*;
@@ -173,8 +182,14 @@ mod test_webpage {
         );
 
         // data: URLs and protocol-relative URLs
-        assert_eq!(webpage.absolute_url("data:image/png;base64,AAAA"), "data:image/png;base64,AAAA");
-        assert_eq!(webpage.absolute_url("//cdn.example.com/a.png"), "https://cdn.example.com/a.png");
+        assert_eq!(
+            webpage.absolute_url("data:image/png;base64,AAAA"),
+            "data:image/png;base64,AAAA"
+        );
+        assert_eq!(
+            webpage.absolute_url("//cdn.example.com/a.png"),
+            "https://cdn.example.com/a.png"
+        );
 
         // Test already absolute URL
         assert_eq!(
@@ -196,6 +211,88 @@ mod test_webpage {
         assert_eq!(
             webpage2.absolute_url("static/img/logo.png"),
             "https://dspy.ai/static/img/logo.png"
+        );
+    }
+
+    fn page(url: &str, content: &str) -> WebPage {
+        WebPage {
+            url: String::from(url),
+            content: Some(String::from(content)),
+        }
+    }
+
+    #[test]
+    fn test_favicon() {
+        let url = "https://example.com/a/b";
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href="data:,"></head></html>"#
+            )
+            .favicon(),
+            None
+        );
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href="DATA:,"></head></html>"#
+            )
+            .favicon(),
+            None
+        );
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href=""></head></html>"#
+            )
+            .favicon(),
+            None
+        );
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href="Data:image/png;base64,AA"></head></html>"#
+            )
+            .favicon(),
+            Some(String::from("Data:image/png;base64,AA"))
+        );
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href="/favicon.ico"></head></html>"#
+            )
+            .favicon(),
+            Some(String::from("https://example.com/favicon.ico"))
+        );
+        // Attribute-breaking characters are returned verbatim; the translator escapes them
+        assert_eq!(
+            page(
+                url,
+                r#"<html><head><link rel="icon" href='/x" onerror="alert(1)'></head></html>"#
+            )
+            .favicon(),
+            Some(String::from(r#"https://example.com/x" onerror="alert(1)"#))
+        );
+        assert_eq!(page(url, "<html><head></head></html>").favicon(), None);
+    }
+
+    #[test]
+    fn test_absolute_url_edge_cases() {
+        let p = page("https://example.com/x", "");
+        assert_eq!(p.absolute_url("DATA:,"), "DATA:,");
+        assert_eq!(
+            p.absolute_url("HTTPS://a.example/i.png"),
+            "HTTPS://a.example/i.png"
+        );
+        let http = page("http://example.com/x", "");
+        assert_eq!(
+            http.absolute_url("//cdn.example/i.png"),
+            "http://cdn.example/i.png"
+        );
+        let no_scheme = page("example.com/x", "");
+        assert_eq!(
+            no_scheme.absolute_url("//cdn.example/i.png"),
+            "https://cdn.example/i.png"
         );
     }
 }
