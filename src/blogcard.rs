@@ -9,17 +9,18 @@ use serde::Serialize;
 pub fn blogcard(url: String) -> Html {
     lazy_static! {
         static ref YOUTUBE: Regex = Regex::new(r"youtube.com/watch\?v=([^&]+)$").unwrap();
-        static ref TWITTER: Regex = Regex::new(r"twitter.com/.*/status/([0-9])+").unwrap();
+        static ref X_POST: Regex =
+            Regex::new(r"(?:twitter\.com|x\.com)/[^/]+/status/[0-9]+").unwrap();
         static ref SOUNDCLOUD: Regex =
             Regex::new(r"https://soundcloud.com/([^/]*)/([a-zA-Z0-9\-_]*)").unwrap();
     }
     if let Some(caps) = YOUTUBE.captures(&url) {
         let id = caps.get(1).unwrap().as_str();
         leaf!("<div class=\"youtube\" src-id=\"{}\"></div>", id)
-    } else if TWITTER.is_match(&url) {
+    } else if X_POST.is_match(&url) {
         leaf!("<blockquote class=\"twitter-tweet\"><p lang=\"ja\" dir=\"ltr\"></p>
                             <a href=\"{}\"></a></blockquote>
-                            <script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>",
+                            <script async src=\"https://platform.x.com/widgets.js\" charset=\"utf-8\"></script>",
                             url)
     } else if let Some(caps) = SOUNDCLOUD.captures(&url) {
         let user_id = caps.get(1).unwrap().as_str().to_string();
@@ -113,4 +114,34 @@ fn blogcard_soundcloud(url: String, user_id: String) -> Html {
     };
     let html = reg.render_template(TEMPLATE, &context).unwrap();
     Html::Leaf(html)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn html_leaf(html: Html) -> String {
+        match html {
+            Html::Leaf(html) => html,
+            _ => panic!("expected an HTML leaf"),
+        }
+    }
+
+    #[test]
+    fn embeds_x_post_with_official_widget() {
+        let url = "https://x.com/vympfh/status/2111802058861158877";
+        let html = html_leaf(blogcard(url.to_string()));
+
+        assert!(html.contains(&format!("<a href=\"{}\"></a>", url)));
+        assert!(html.contains("class=\"twitter-tweet\""));
+        assert!(html.contains("src=\"https://platform.x.com/widgets.js\""));
+    }
+
+    #[test]
+    fn keeps_twitter_post_embedding_compatible() {
+        let html = html_leaf(blogcard("https://twitter.com/Jack/status/20".to_string()));
+
+        assert!(html.contains("class=\"twitter-tweet\""));
+        assert!(html.contains("src=\"https://platform.x.com/widgets.js\""));
+    }
 }
