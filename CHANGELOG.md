@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-05
+
+### Added
+- Official X post embeds for `twitter.com` and `x.com` URLs
+- Custom start numbers for ordered lists
+- Optional filenames on fenced code blocks
+- Nested fenced code blocks
+- Source positions in Markdown parse errors
+
+### Fixed
+- Display math inside block quotes
+- Decoding of non-UTF-8 web pages
+- Favicon handling and HTML escaping for webpage metadata
+- Prism CDN URL, version, and subresource integrity metadata
+
 ## [0.9.0] - 2026-05-13
 
 ### Added
