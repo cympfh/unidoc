@@ -1,5 +1,8 @@
 use easy_scraper::Pattern;
+use encoding_rs::{Encoding, UTF_8};
+use regex::bytes::Regex;
 use reqwest;
+use reqwest::header::CONTENT_TYPE;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
@@ -19,8 +22,7 @@ impl WebPage {
             .get(&url)
             .send()
             .ok()
-            .map(|response| response.text().ok())
-            .flatten();
+            .and_then(|response| response_text(response).ok());
         Self { url, content }
     }
     pub fn title(&self) -> Option<String> {
@@ -136,6 +138,40 @@ impl WebPage {
             None
         }
     }
+}
+
+fn response_text(response: reqwest::blocking::Response) -> Result<String, reqwest::Error> {
+    let content_type = response
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_owned);
+    let body = response.bytes()?;
+    Ok(decode_html(&body, content_type.as_deref()))
+}
+
+fn decode_html(body: &[u8], content_type: Option<&str>) -> String {
+    let (encoding, bom_len) = Encoding::for_bom(body)
+        .or_else(|| charset_from_content_type(content_type).map(|encoding| (encoding, 0)))
+        .or_else(|| charset_from_meta(body).map(|encoding| (encoding, 0)))
+        .unwrap_or((UTF_8, 0));
+    let (text, _, _) = encoding.decode(&body[bom_len..]);
+    text.into_owned()
+}
+
+fn charset_from_content_type(content_type: Option<&str>) -> Option<&'static Encoding> {
+    let content_type = content_type?;
+    let pattern = Regex::new(r#"(?i)(?:^|;)\s*charset\s*=\s*["']?\s*([a-z0-9._:-]+)"#).unwrap();
+    let captures = pattern.captures(content_type.as_bytes())?;
+    Encoding::for_label(captures.get(1)?.as_bytes())
+}
+
+fn charset_from_meta(body: &[u8]) -> Option<&'static Encoding> {
+    // The HTML encoding declaration must occur within the first 1024 bytes.
+    let prefix = &body[..body.len().min(1024)];
+    let pattern = Regex::new(r#"(?i)<meta\s+[^>]*charset\s*=\s*["']?\s*([a-z0-9._:-]+)"#).unwrap();
+    let captures = pattern.captures(prefix)?;
+    Encoding::for_label(captures.get(1)?.as_bytes())
 }
 
 /// ASCII case-insensitive `starts_with`
@@ -293,6 +329,33 @@ mod test_webpage {
         assert_eq!(
             no_scheme.absolute_url("//cdn.example/i.png"),
             "https://cdn.example/i.png"
+        );
+    }
+
+    #[test]
+    fn test_decode_html_uses_meta_charset() {
+        let html = r#"<html><head><meta charset="shift_jis"><title>日本語</title></head></html>"#;
+        let (encoded, _, _) = encoding_rs::SHIFT_JIS.encode(html);
+        assert_eq!(decode_html(&encoded, None), html);
+    }
+
+    #[test]
+    fn test_decode_html_uses_content_type_charset() {
+        let html = "<html><head><title>日本語</title></head></html>";
+        let (encoded, _, _) = encoding_rs::EUC_JP.encode(html);
+        assert_eq!(
+            decode_html(&encoded, Some("text/html; charset=EUC-JP")),
+            html
+        );
+    }
+
+    #[test]
+    fn test_decode_html_uses_bom_before_header() {
+        let mut encoded = vec![0xEF, 0xBB, 0xBF];
+        encoded.extend_from_slice("<title>日本語</title>".as_bytes());
+        assert_eq!(
+            decode_html(&encoded, Some("text/html; charset=shift_jis")),
+            "<title>日本語</title>"
         );
     }
 }

@@ -1629,6 +1629,7 @@ dependencies = [
  "base64 0.22.1",
  "easy-scraper",
  "emojis",
+ "encoding_rs",
  "handlebars",
  "html-escape",
  "lazy_static",
