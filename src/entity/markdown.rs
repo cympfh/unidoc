@@ -75,6 +75,7 @@ pub enum Inline {
     Newline,
     Comment(String),
     MathJax(String),
+    DisplayMathJax(String),
     Emoji(String),
     FootnoteRef(String), // label
 }

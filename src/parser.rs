@@ -277,6 +277,9 @@ fn parse_text(input: &str) -> ParseResult<'_, Text> {
     let parse_mathjax = map(delimited(tag("$"), parse_tex, tag("$")), |tex| {
         Inline::MathJax(tex)
     });
+    let parse_display_mathjax = map(delimited(tag("$$"), parse_tex, tag("$$")), |tex| {
+        Inline::DisplayMathJax(tex)
+    });
     let parse_emoji = map(
         delimited(tag(":"), is_not(": \t\r\n"), tag(":")),
         |shortcode: &str| Inline::Emoji(shortcode.to_string()),
@@ -295,6 +298,7 @@ fn parse_text(input: &str) -> ParseResult<'_, Text> {
             parse_deleted,
             parse_code,
             parse_comment,
+            parse_display_mathjax,
             parse_mathjax,
             parse_emoji,
             parse_plaintext,
@@ -735,6 +739,10 @@ mod test_parser {
                 Inline::Emphasis(vec![text!("second")]),
                 text!("line."),
             }]
+        );
+        assert_parse!(
+            "> $$y = f(x)$$\n",
+            vec![q! { Inline::DisplayMathJax(String::from("y = f(x)")) }]
         );
     }
 
