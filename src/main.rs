@@ -129,7 +129,7 @@ fn option_check(opt: &Opt) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
     if opt.debug {
         eprintln!(">>> opt = {:?}", &opt);
@@ -173,6 +173,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
     io::write(&opt.output, &html)?;
     Ok(())
+}
+
+fn main() {
+    if let Err(error) = run() {
+        eprintln!("{error}");
+        std::process::exit(1);
+    }
 }
 
 #[cfg(test)]

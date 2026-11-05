@@ -32,12 +32,7 @@ pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
     if let Ok((rest, doc)) = parse_markdown(input) {
         if !rest.is_empty() {
             let (line, column) = position(input, rest);
-            eprintln!("Parsed: {:?}", &doc);
-            eprintln!("Left at line {}, column {}: {:?}", line, column, &rest);
-            Err(ParseError(format!(
-                "line {}, column {}: {:?}",
-                line, column, rest
-            )))
+            Err(ParseError(format_error(input, line, column)))
         } else {
             Ok(doc)
         }
@@ -46,6 +41,17 @@ pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
             "Something Critical Error in Parsing Markdown",
         )))
     }
+}
+
+fn format_error(input: &str, line: usize, column: usize) -> String {
+    let source_line = input.lines().nth(line - 1).unwrap_or_default();
+    let gutter_width = line.to_string().len();
+    format!(
+        "error: could not parse Markdown\n {arrow:>gutter_width$} {line}:{column}\n {empty:>gutter_width$} |\n {line:>gutter_width$} | {source_line}\n {empty:>gutter_width$} | {padding}^ unexpected input",
+        arrow = "-->",
+        empty = "",
+        padding = " ".repeat(column - 1),
+    )
 }
 
 fn position(input: &str, rest: &str) -> (usize, usize) {
@@ -529,7 +535,7 @@ fn parse_tex(input: &str) -> ParseResult<'_, String> {
 mod test_parser {
 
     use crate::entity::markdown::*;
-    use crate::parser::{markdown, position};
+    use crate::parser::{format_error, markdown, position};
 
     macro_rules! cannot_parse {
         ($markdown:expr) => {
@@ -612,10 +618,14 @@ mod test_parser {
         assert_eq!(position(input, rest), (2, 1));
         assert_eq!(
             markdown(input).unwrap_err().to_string(),
-            "line 2, column 1: \"fuga \\npiyo\\n\""
+            "error: could not parse Markdown\n --> 2:1\n   |\n 2 | fuga \n   | ^ unexpected input"
         );
 
         assert_eq!(position("あいう x", "x"), (1, 5));
+        assert_eq!(
+            format_error("あいう x\n", 1, 5),
+            "error: could not parse Markdown\n --> 1:5\n   |\n 1 | あいう x\n   |     ^ unexpected input"
+        );
     }
 
     #[test]

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Markdown parse errors now use compiler-style source diagnostics
+
 ## [0.10.0] - 2026-11-05
 
 ### Added
