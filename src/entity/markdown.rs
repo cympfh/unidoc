@@ -8,7 +8,7 @@ pub enum Block {
     ListBlock(List),
     Paragraph(Text),
     Quoted(Text),
-    Code(Option<String>, String),
+    Code(Option<String>, Option<String>, String), // (language, filename, content)
     CodeImport(Option<String>, FilePath),
     HorizontalRule,
     Table(Vec<Align>, Vec<Vec<Text>>, bool), // (Alignments, Content, first_is_header?)

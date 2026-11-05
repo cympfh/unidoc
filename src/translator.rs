@@ -82,10 +82,10 @@ impl Translator {
             Block::Quoted(text) => {
                 leaf!("<blockquote>{}</blockquote>", self.text(&text))
             }
-            Block::Code(language, code) => {
+            Block::Code(language, filename, code) => {
                 // executor check
-                match language.clone() {
-                    Some(x) if x == String::from("@bash") => {
+                let rendered = match language.as_deref() {
+                    Some("@bash") => {
                         let res = Executor::bash(code);
                         if res.is_ok() {
                             leaf!("<pre><code>{}</code></pre>", res.unwrap())
@@ -93,7 +93,7 @@ impl Translator {
                             leaf!("<pre><samp class=error>{}</samp></pre>", res.unwrap())
                         }
                     }
-                    Some(x) if x == String::from("@dot") || x == String::from("@graphviz") => {
+                    Some("@dot" | "@graphviz") => {
                         let res = Executor::dot(code);
                         if res.is_ok() {
                             leaf!("<img src=\"{}\">", res.unwrap())
@@ -101,7 +101,7 @@ impl Translator {
                             leaf!("<pre><samp class=error>{}</samp></pre>", res.unwrap())
                         }
                     }
-                    Some(x) if x == String::from("@gnuplot") => {
+                    Some("@gnuplot") => {
                         let res = Executor::gnuplot(code);
                         if res.is_ok() {
                             leaf!("{}", res.unwrap())
@@ -114,7 +114,7 @@ impl Translator {
                         let class = if let Some(lang) = language {
                             format!("code language-{}", lang)
                         } else {
-                            format!("code")
+                            String::from("code")
                         };
                         leaf!(
                             "<pre><code class=\"{}\">{}</code></pre>",
@@ -122,6 +122,17 @@ impl Translator {
                             encode(&code)
                         )
                     }
+                };
+                if let Some(filename) = filename {
+                    node!(
+                        leaf!("<figure class=code-block>"),
+                        leaf!("</figure>"); [
+                            leaf!("<figcaption>{}</figcaption>", encode(filename)),
+                            rendered
+                        ]
+                    )
+                } else {
+                    rendered
                 }
             }
             Block::HorizontalRule => leaf!("<hr />"),
@@ -141,7 +152,7 @@ impl Translator {
             Block::CodeImport(language, path) => {
                 if let Some(path) = find(&path, &self.filedir) {
                     let content = io::read(&path.to_string()).unwrap();
-                    let codeblock = Block::Code(language.clone(), content.to_string());
+                    let codeblock = Block::Code(language.clone(), None, content.to_string());
                     self.block(&codeblock)
                 } else {
                     panic!("Cannot find {}", path);

@@ -100,10 +100,16 @@ def code():
 def code():
     return code
 ```
+
+```python:main.py
+def main():
+    pass
+```
 ````
 
 Prism.js will be used for Syntax highlight.
 Please check [this](https://prismjs.com/#basic-usage) to see language support.
+Append `:filename` to the language name to display a filename above the code block.
 
 ### Table
 
