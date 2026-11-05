@@ -8,7 +8,7 @@ use nom::bytes::complete::{
 use nom::character::complete::{
     alpha1, digit1, line_ending, multispace0, not_line_ending, space0, space1,
 };
-use nom::combinator::{map, map_parser, not, opt, peek, success};
+use nom::combinator::{map, map_parser, map_res, not, opt, peek, success};
 use nom::multi::{many0, many1};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
 use nom::IResult;
@@ -404,7 +404,9 @@ fn parse_list<'r>(indent: usize) -> impl FnMut(&'r str) -> ParseResult<'r, List>
                 map(alt((tag("-"), tag("*"), tag("+"))), |_| {
                     ListOrderType::Unordered
                 }),
-                map(pair(digit1, tag(".")), |_| ListOrderType::OrderedNumbers),
+                map_res(terminated(digit1, tag(".")), |number: &str| {
+                    number.parse().map(ListOrderType::OrderedNumbers)
+                }),
                 map(pair(alpha1, tag(".")), |_| ListOrderType::OrderedAlphabets),
             )),
             space1,
@@ -803,12 +805,12 @@ fn main(){{}}```
             "1. one\n2. two\n\n1. 壱\n  a. い\n  b. ろ\n1. 弐\n",
             vec![
                 listblock! {
-                    ListOrderType::OrderedNumbers;
+                    ListOrderType::OrderedNumbers(1);
                     (None, vec![text!("one")], None),
                     (None, vec![text!("two")], None),
                 },
                 listblock! {
-                    ListOrderType::OrderedNumbers;
+                    ListOrderType::OrderedNumbers(1);
                     (
                         None,
                         vec![text!("壱")],
@@ -872,7 +874,7 @@ fn main(){{}}```
                 (Some(true), vec![text!("DONE")], None),
                 (None, vec![text!("grouped:")], Some(
                     list! {
-                        ListOrderType::OrderedNumbers;
+                        ListOrderType::OrderedNumbers(1);
                         (Some(false), vec![text!("todotodo.")], None)
                     }
                 )),
