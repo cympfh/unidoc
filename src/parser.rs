@@ -67,12 +67,17 @@ fn parse_block(input: &str) -> ParseResult<'_, Block> {
             delimited(tag("```"), not_line_ending, line_ending),
             terminated(terminated(take_until("```"), tag("```")), line_ending),
         ),
-        |(lang, code): (&str, &str)| {
-            if lang.is_empty() {
-                Block::Code(None, code.to_string())
+        |(info, code): (&str, &str)| {
+            let (language, filename) = match info.split_once(':') {
+                Some((language, filename)) => (language, Some(filename.to_string())),
+                None => (info, None),
+            };
+            let language = if language.is_empty() {
+                None
             } else {
-                Block::Code(Some(lang.to_string()), code.to_string())
-            }
+                Some(language.to_string())
+            };
+            Block::Code(language, filename, code.to_string())
         },
     );
 
@@ -504,10 +509,17 @@ mod test_parser {
     }
     macro_rules! codeblock {
         ($code:expr) => {
-            Block::Code(None, $code.to_string())
+            Block::Code(None, None, $code.to_string())
         };
         ($lang:expr, $code:expr) => {
-            Block::Code(Some($lang.to_string()), $code.to_string())
+            Block::Code(Some($lang.to_string()), None, $code.to_string())
+        };
+        ($lang:expr, $filename:expr, $code:expr) => {
+            Block::Code(
+                Some($lang.to_string()),
+                Some($filename.to_string()),
+                $code.to_string(),
+            )
         };
     }
     macro_rules! p {
@@ -757,6 +769,14 @@ mod test_parser {
         assert_parse!(
             "```\nmain: IO ()\n```\n",
             vec![codeblock!("main: IO ()\n"),]
+        );
+        assert_parse!(
+            "```javascript:main.js\nconsole.log(\"Hello\");\n```\n",
+            vec![codeblock!(
+                "javascript",
+                "main.js",
+                "console.log(\"Hello\");\n"
+            )]
         );
         assert_parse!(
             r#"# Code

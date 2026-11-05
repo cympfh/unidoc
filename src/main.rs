@@ -250,6 +250,20 @@ mod test_main {
     }
 
     #[test]
+    fn test_codeblock_with_filename() {
+        assert_convert!(compact;
+            "```javascript:main.js\nconsole.log(\"Hello\");\n```\n",
+            "",
+            "<figure class=code-block><figcaption>main.js</figcaption><pre><code class=\"code language-javascript\">console.log(&quot;Hello&quot;);\n</code></pre></figure>\n"
+        );
+        assert_convert!(compact;
+            "```text:<script>.txt\ncontent\n```\n",
+            "",
+            "<figure class=code-block><figcaption>&lt;script&gt;.txt</figcaption><pre><code class=\"code language-text\">content\n</code></pre></figure>\n"
+        );
+    }
+
+    #[test]
     fn test_raw_html() {
         assert_convert!(compact; "# test\n<div>Hi</div>\n", "test", "<h1 class=\"title\" id=\"1-test\">test</h1><p><div>Hi</div></p>\n");
     }
