@@ -157,9 +157,10 @@ impl Translator {
     fn list(&mut self, list: &List) -> Html {
         let List { order_type, items } = list;
         let (begin, end) = match order_type {
-            ListOrderType::Unordered => ("<ul>", "</ul>"),
-            ListOrderType::OrderedNumbers => ("<ol>", "</ol>"),
-            ListOrderType::OrderedAlphabets => ("<ol type=a>", "</ol>"),
+            ListOrderType::Unordered => (String::from("<ul>"), "</ul>"),
+            ListOrderType::OrderedNumbers(1) => (String::from("<ol>"), "</ol>"),
+            ListOrderType::OrderedNumbers(start) => (format!("<ol start={}>", start), "</ol>"),
+            ListOrderType::OrderedAlphabets => (String::from("<ol type=a>"), "</ol>"),
         };
         let mut html = node!(leaf!(begin), leaf!(end));
         for item in items.iter() {

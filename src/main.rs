@@ -208,6 +208,10 @@ mod test_main {
             "",
             "<ul><li>a</li><li>b</li><li>c</li></ul>\n"
         );
+        assert_convert!(compact; "5. hoge\n6. hoge\n",
+            "",
+            "<ol start=5><li>hoge</li><li>hoge</li></ol>\n"
+        );
         assert_convert!(compact; "[[http://example.com/]]\n",
             "http://example.com/",
             "<p><a href=\"http://example.com/\">Example Domain</a></p>\n"

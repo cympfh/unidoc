@@ -39,7 +39,7 @@ impl List {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ListOrderType {
     Unordered,
-    OrderedNumbers,
+    OrderedNumbers(usize),
     OrderedAlphabets,
 }
 
