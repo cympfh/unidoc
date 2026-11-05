@@ -31,9 +31,13 @@ impl std::error::Error for ParseError {
 pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
     if let Ok((rest, doc)) = parse_markdown(input) {
         if !rest.is_empty() {
+            let (line, column) = position(input, rest);
             eprintln!("Parsed: {:?}", &doc);
-            eprintln!("Left: {:?}", &rest);
-            Err(ParseError(String::from(rest)))
+            eprintln!("Left at line {}, column {}: {:?}", line, column, &rest);
+            Err(ParseError(format!(
+                "line {}, column {}: {:?}",
+                line, column, rest
+            )))
         } else {
             Ok(doc)
         }
@@ -42,6 +46,18 @@ pub fn markdown(input: &str) -> Result<Markdown, ParseError> {
             "Something Critical Error in Parsing Markdown",
         )))
     }
+}
+
+fn position(input: &str, rest: &str) -> (usize, usize) {
+    let parsed = &input[..input.len() - rest.len()];
+    let line = parsed.bytes().filter(|byte| *byte == b'\n').count() + 1;
+    let column = parsed
+        .rsplit_once('\n')
+        .map_or(parsed, |(_, current_line)| current_line)
+        .chars()
+        .count()
+        + 1;
+    (line, column)
 }
 
 fn parse_markdown(input: &str) -> ParseResult<'_, Markdown> {
@@ -513,7 +529,7 @@ fn parse_tex(input: &str) -> ParseResult<'_, String> {
 mod test_parser {
 
     use crate::entity::markdown::*;
-    use crate::parser::markdown;
+    use crate::parser::{markdown, position};
 
     macro_rules! cannot_parse {
         ($markdown:expr) => {
@@ -587,6 +603,19 @@ mod test_parser {
     fn test_empty() {
         assert_parse!("", vec![]);
         assert_parse!(" \t\n\r", vec![]);
+    }
+
+    #[test]
+    fn test_error_position() {
+        let input = "hoge\nfuga \npiyo\n";
+        let rest = "fuga \npiyo\n";
+        assert_eq!(position(input, rest), (2, 1));
+        assert_eq!(
+            markdown(input).unwrap_err().to_string(),
+            "line 2, column 1: \"fuga \\npiyo\\n\""
+        );
+
+        assert_eq!(position("あいう x", "x"), (1, 5));
     }
 
     #[test]
