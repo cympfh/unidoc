@@ -5,10 +5,9 @@ use nom::branch::alt;
 use nom::bytes::complete::{
     is_not, tag, take, take_until, take_while, take_while1, take_while_m_n,
 };
-use nom::character::complete::{
-    alpha1, digit1, line_ending, multispace0, not_line_ending, space0, space1,
-};
+use nom::character::complete::{alpha1, digit1, line_ending, multispace0, space0, space1};
 use nom::combinator::{map, map_parser, map_res, not, opt, peek, success};
+use nom::error::{Error, ErrorKind};
 use nom::multi::{many0, many1};
 use nom::sequence::{delimited, pair, preceded, terminated, tuple};
 use nom::IResult;
@@ -62,24 +61,7 @@ fn parse_block(input: &str) -> ParseResult<'_, Block> {
         |(hashes, _, text)| Block::Heading(hashes.len(), text),
     );
 
-    let parse_code = map(
-        pair(
-            delimited(tag("```"), not_line_ending, line_ending),
-            terminated(terminated(take_until("```"), tag("```")), line_ending),
-        ),
-        |(info, code): (&str, &str)| {
-            let (language, filename) = match info.split_once(':') {
-                Some((language, filename)) => (language, Some(filename.to_string())),
-                None => (info, None),
-            };
-            let language = if language.is_empty() {
-                None
-            } else {
-                Some(language.to_string())
-            };
-            Block::Code(language, filename, code.to_string())
-        },
-    );
+    let parse_code = parse_code_block;
 
     let parse_listblock = map(parse_list(0), |list| Block::ListBlock(list));
 
@@ -160,6 +142,61 @@ fn parse_block(input: &str) -> ParseResult<'_, Block> {
         parse_footnote,
         parse_paragraph,
     ))(input)
+}
+
+fn parse_code_block(input: &str) -> ParseResult<'_, Block> {
+    let fence_len = input.bytes().take_while(|byte| *byte == b'`').count();
+    if fence_len < 3 {
+        return Err(nom::Err::Error(Error::new(input, ErrorKind::Tag)));
+    }
+
+    let after_fence = &input[fence_len..];
+    let info_end = after_fence
+        .find('\n')
+        .ok_or_else(|| nom::Err::Error(Error::new(after_fence, ErrorKind::CrLf)))?;
+    let info = after_fence[..info_end]
+        .strip_suffix('\r')
+        .unwrap_or(&after_fence[..info_end]);
+    let code_and_closing_fence = &after_fence[info_end + 1..];
+
+    let mut offset = 0;
+    while let Some(relative_start) = code_and_closing_fence[offset..].find('`') {
+        let start = offset + relative_start;
+        let run_len = code_and_closing_fence[start..]
+            .bytes()
+            .take_while(|byte| *byte == b'`')
+            .count();
+        let after_run = &code_and_closing_fence[start + run_len..];
+        let line_ending_len = if after_run.starts_with("\r\n") {
+            Some(2)
+        } else if after_run.starts_with('\n') {
+            Some(1)
+        } else {
+            None
+        };
+
+        if run_len >= fence_len && line_ending_len.is_some() {
+            let (language, filename) = match info.split_once(':') {
+                Some((language, filename)) => (language, Some(filename.to_string())),
+                None => (info, None),
+            };
+            let language = if language.is_empty() {
+                None
+            } else {
+                Some(language.to_string())
+            };
+            let rest = &after_run[line_ending_len.unwrap()..];
+            let code = code_and_closing_fence[..start].to_string();
+            return Ok((rest, Block::Code(language, filename, code)));
+        }
+
+        offset = start + run_len;
+    }
+
+    Err(nom::Err::Error(Error::new(
+        code_and_closing_fence,
+        ErrorKind::TakeUntil,
+    )))
 }
 
 fn parse_table(input: &str) -> ParseResult<'_, Block> {
@@ -776,6 +813,17 @@ mod test_parser {
                 "javascript",
                 "main.js",
                 "console.log(\"Hello\");\n"
+            )]
+        );
+        assert_parse!(
+            "````markdown\n```\ndef main():\n```\n````\n",
+            vec![codeblock!("markdown", "```\ndef main():\n```\n")]
+        );
+        assert_parse!(
+            "`````markdown\n````\n```\ndef main():\n```\n````\n`````\n",
+            vec![codeblock!(
+                "markdown",
+                "````\n```\ndef main():\n```\n````\n"
             )]
         );
         assert_parse!(
